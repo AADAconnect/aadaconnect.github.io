@@ -45,10 +45,12 @@ AADAconnect is a core product under the **AADA ecosystem**, intended to become a
 
 ### 🔐 Security (High Priority)
 
+* The web interface is hosted using GitHub Pages and acts purely as a user interface layer.
 * No hardcoded secrets in frontend
 * Secure topic-based access design
 * Token-based authentication (planned)
 * Organization-wide 2FA enforcement
+* All authentication, authorization, and command validation are handled directly on the IoT device (ESP32).
 
 ### 🧠 Architecture-first Design
 
