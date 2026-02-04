@@ -77,14 +77,16 @@ AADAconnect is a core product under the **AADA ecosystem**, intended to become a
 ## 🗂️ Repository Structure
 
 ```text
-AADAconnect/
+aadaconnect.github.io/
 │
-├── firmware/          # ESP32 / ESP8266 firmware
-├── web/               # Web controller (HTML, CSS, JS)
-├── docs/              # Architecture & documentation
-├── scripts/           # Utilities & tooling
-├── .github/           # GitHub workflows & org configs
-└── README.md
+├── index.html        # Landing page (GitHub Pages entry point)
+├── login.html        # User authentication UI
+├── dashboard.html    # Main dashboard interface
+├── control.html      # Device control interface
+├── wifi_setup.html   # Wi-Fi configuration page for devices
+│
+├── README.md         # Project documentation
+
 ```
 
 ---
