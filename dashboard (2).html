@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AADA - Smart Home</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: rgba(30, 41, 59, 0.6);
+      --bg-card-hover: rgba(30, 41, 59, 0.8);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-primary: #0ea5e9;
+      --accent-secondary: #10b981;
+      --status-online: #10b981;
+      --status-offline: #64748b;
+      --status-checking: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    body.light-mode {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-card-hover: rgba(241, 245, 249, 0.9);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --accent-primary: #0284c7;
+      --accent-secondary: #059669;
+      --status-online: #10b981;
+      --status-offline: #64748b;
+      --status-checking: #94a3b8;
+      --border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      overflow: hidden;
+      position: fixed;
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+
+    .app-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      background: var(--bg-primary);
+    }
+
+    .header {
+      padding: max(env(safe-area-inset-top), 20px) 24px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .app-title {
+      font-size: 27px;
+      font-weight: 680;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .icon-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95);
+       
+    }
+
+    .icon-btn svg {
+      width: 22px;
+      height: 22px;
+      stroke: var(--text-primary);
+      stroke-width: 1.8;
+      transition: transform 0.4s ease;
+    }
+
+    #themeToggleBtn:active svg {
+  transform: rotate(180deg);
+ }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 12px currentColor;
+    }
+
+    .status-dot.connected {
+      background: var(--status-online);
+      color: var(--status-online);
+    }
+
+    .status-dot.disconnected {
+      background: var(--status-offline);
+      color: var(--status-offline);
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .content::-webkit-scrollbar {
+      display: none;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .device-count {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .device-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      padding-bottom: 120px; /* Enough space for FAB */
+    }
+
+    .device-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .device-card:hover {
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-xl);
+      background: var(--bg-card-hover);
+    }
+
+    .device-card:active {
+      transform: translateY(-4px) scale(0.98);
+    }
+
+    .device-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .device-card.online::before {
+      opacity: 1;
+    }
+
+    .device-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-lg);
+      transition: all 0.3s ease;
+    }
+
+    .device-card:hover .device-icon {
+      transform: scale(1.1);
+    }
+
+    .device-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: white;
+      stroke-width: 2;
+    }
+
+    .device-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      text-align: center;
+    }
+
+    .device-rank {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .device-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .device-status.online {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--status-online);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .device-status.offline,
+    .device-status.checking {
+      background: rgba(100, 116, 139, 0.2);
+      color: var(--status-offline);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .status-dot-small {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot-small.online {
+      background: var(--status-online);
+      box-shadow: 0 0 10px var(--status-online);
+    }
+
+    .status-dot-small.offline,
+    .status-dot-small.checking {
+      background: var(--status-offline);
+      box-shadow: 0 0 10px var(--status-offline);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-icon {
+      width: 96px;
+      height: 96px;
+      margin: 0 auto 28px;
+      border-radius: var(--radius-xl);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .empty-icon svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--text-muted);
+    }
+
+    .empty-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .empty-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 280px;
+      margin: 0 auto 32px;
+      line-height: 1.5;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .loading-spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid var(--border-color);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: var(--text-secondary);
+    }
+
+    .fab {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom) + 28px);
+      right: 28px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      box-shadow: var(--shadow-xl);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .fab:hover {
+      transform: translateY(-4px) scale(1.05);
+    }
+
+    .fab:active {
+      transform: scale(0.95);
+    }
+
+    .fab svg {
+      width: 28px;
+      height: 28px;
+      stroke: white;
+      stroke-width: 3;
+    }
+
+    .action-sheet-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 200;
+    }
+
+    .action-sheet-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .action-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 28px 24px calc(env(safe-area-inset-bottom) + 28px);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0, 0.07, 1);
+      z-index: 201;
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .action-sheet.show {
+      transform: translateY(0);
+    }
+
+    .action-sheet-handle {
+      width: 48px;
+      height: 5px;
+      background: var(--border-color);
+      border-radius: 3px;
+      margin: 0 auto 28px;
+    }
+
+    .action-item {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 18px 20px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-item:hover {
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    .action-item:active {
+      transform: scale(0.98);
+    }
+
+    .action-item-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+
+    .action-item-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: white;
+      stroke-width: 2;
+    }
+
+    .action-item-text {
+      flex: 1;
+    }
+
+    .action-item-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .action-item-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .haptics-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 28px 24px calc(env(safe-area-inset-bottom) + 28px);
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0, 0.07, 1);
+      z-index: 201;
+      max-width: 480px;
+      margin: 0 auto;
+      box-shadow: var(--shadow-xl);
+    }
+
+    .haptics-sheet.show {
+      transform: translateY(0);
+    }
+
+    .haptics-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .haptics-label {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .haptics-label input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      accent-color: var(--accent-primary);
+      cursor: pointer;
+    }
+
+    .haptics-label span {
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+
+    .intensity-container {
+      padding: 18px 20px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .intensity-title {
+      font-size: 16px;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .slider-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border-color);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.6);
+      border: 3px solid var(--bg-secondary);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.6);
+      border: 3px solid var(--bg-secondary);
+    }
+
+    .intensity-value {
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-width: 40px;
+    }
+
+    @media (max-width: 480px) {
+      .header {
+        padding: max(env(safe-area-inset-top), 16px) 20px 16px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+  /*    .fab {
+        bottom: calc(env(safe-area-inset-bottom) + 24px);
+        right: 24px;
+        width: 56px;
+        height: 56px;
+      }
+
+      .fab svg {
+        width: 24px;
+        height: 24px;
+      } */
+
+      .device-grid {
+        padding-bottom: 110px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <div class="header-top">
+        <h1 class="app-title">AADAconnect</h1>
+        <div class="header-actions">
+          <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+          </button>
+          <button id="moreOptionsBtn" class="icon-btn" title="More Options">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="1"/>
+              <circle cx="12" cy="5" r="1"/>
+              <circle cx="12" cy="19" r="1"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="user-info">
+        <span id="mqttStatus" class="status-dot disconnected"></span>
+        <span id="userEmail">Loading...</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="section-header">
+        <h2 class="section-title">Devices</h2>
+        <span class="device-count" id="deviceCount">0 devices</span>
+      </div>
+      <div class="device-grid" id="deviceGrid">
+        <div class="loading">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading devices...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="fab" id="addDeviceBtn">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </button>
+
+  <div class="action-sheet-overlay" id="actionSheetOverlay"></div>
+
+  <div class="action-sheet" id="actionSheet">
+    <div class="action-sheet-handle"></div>
+
+    <div class="action-item" id="refreshItem">
+      <div class="action-item-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+        </svg>
+      </div>
+      <div class="action-item-text">
+        <div class="action-item-title">Refresh</div>
+        <div class="action-item-subtitle">Update device status</div>
+      </div>
+    </div>
+
+    <div class="action-item" id="hapticsItem">
+      <div class="action-item-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+          <path d="M16 2v4M16 10v2M20 4v4M20 12v2M12 4v4M12 12v2"/>
+        </svg>
+      </div>
+      <div class="action-item-text">
+        <div class="action-item-title">Haptics</div>
+        <div class="action-item-subtitle">Configure haptic feedback</div>
+      </div>
+    </div>
+
+    <div class="action-item" id="logoutItem">
+      <div class="action-item-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </div>
+      <div class="action-item-text">
+        <div class="action-item-title">Logout</div>
+        <div class="action-item-subtitle">Sign out of your account</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="haptics-sheet" id="hapticsSheet">
+    <div class="action-sheet-handle"></div>
+    
+    <div class="haptics-item">
+      <label class="haptics-label">
+        <input type="checkbox" id="hapticsController">
+        <span>Haptic feedback for controller on-off button</span>
+      </label>
+    </div>
+
+    <div class="haptics-item">
+      <label class="haptics-label">
+        <input type="checkbox" id="hapticsAll">
+        <span>Haptics for all buttons</span>
+      </label>
+    </div>
+
+    <div class="intensity-container">
+      <div class="intensity-title">Haptic Intensity</div>
+      <div class="slider-wrapper">
+        <input type="range" id="hapticsIntensity" min="10" max="200" step="10" value="50" class="slider">
+        <span class="intensity-value" id="intensityValue">50ms</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function hapticFeedback(duration) {
+      if ('vibrate' in navigator && duration > 0) {
+        navigator.vibrate(duration);
+      }
+    }
+
+    function getHapticIntensity() {
+      const saved = localStorage.getItem('hapticsIntensity');
+      return saved ? parseInt(saved) : 50;
+    }
+
+    function shouldHapticAll() {
+      return localStorage.getItem('hapticsAll') === 'true';
+    }
+
+    function addHapticToElement(element, callback) {
+      element.addEventListener('click', function(e) {
+        if (shouldHapticAll()) {
+          hapticFeedback(getHapticIntensity());
+        }
+        if (callback) callback(e);
+      });
+    }
+
+    let mqttClient = null;
+    let currentUser = null;
+    let devices = [];
+    let deviceOnlineStatus = {};
+    let deviceTimeouts = {};
+    let deviceListTimeout = null;
+    let renderTimeout = null;
+
+    function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      const isLight = document.body.classList.contains('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'light') document.body.classList.add('light-mode');
+    }
+
+    function showActionSheet() {
+      document.getElementById('actionSheetOverlay').classList.add('show');
+      document.getElementById('actionSheet').classList.add('show');
+    }
+
+    function hideActionSheet() {
+      document.getElementById('actionSheetOverlay').classList.remove('show');
+      document.getElementById('actionSheet').classList.remove('show');
+    }
+
+    function showHapticsSheet() {
+      hideActionSheet();
+      document.getElementById('actionSheetOverlay').classList.add('show');
+      document.getElementById('hapticsSheet').classList.add('show');
+      loadHapticsSettings();
+      updateIntensityDisplay();
+    }
+
+    function hideHapticsSheet() {
+      document.getElementById('actionSheetOverlay').classList.remove('show');
+      document.getElementById('hapticsSheet').classList.remove('show');
+    }
+
+    function loadHapticsSettings() {
+      document.getElementById('hapticsController').checked = localStorage.getItem('hapticsController') === 'true';
+      document.getElementById('hapticsAll').checked = localStorage.getItem('hapticsAll') === 'true';
+      const intensity = getHapticIntensity();
+      document.getElementById('hapticsIntensity').value = intensity;
+      updateIntensityDisplay();
+    }
+
+    function updateIntensityDisplay() {
+      const value = document.getElementById('hapticsIntensity').value;
+      document.getElementById('intensityValue').textContent = value + 'ms';
+    }
+
+    function saveHapticsSettings() {
+      localStorage.setItem('hapticsController', document.getElementById('hapticsController').checked);
+      localStorage.setItem('hapticsAll', document.getElementById('hapticsAll').checked);
+      localStorage.setItem('hapticsIntensity', document.getElementById('hapticsIntensity').value);
+    }
+
+    document.getElementById('actionSheetOverlay').addEventListener('click', () => {
+      hideActionSheet();
+      hideHapticsSheet();
+    });
+
+    document.getElementById('hapticsIntensity').addEventListener('input', function(e) {
+      const value = parseInt(e.target.value);
+      updateIntensityDisplay();
+      saveHapticsSettings();
+      hapticFeedback(value);
+    });
+
+    document.getElementById('hapticsController').addEventListener('change', saveHapticsSettings);
+    document.getElementById('hapticsAll').addEventListener('change', saveHapticsSettings);
+
+    function checkAuth() {
+      const userStr = sessionStorage.getItem('current_user');
+      if (!userStr) {
+        window.location.href = 'login.html';
+        return null;
+      }
+      return JSON.parse(userStr);
+    }
+
+    function init() {
+      loadTheme();
+      currentUser = checkAuth();
+      if (!currentUser) return;
+      document.getElementById('userEmail').textContent = currentUser.email;
+      connectMQTT();
+
+      addHapticToElement(document.getElementById('themeToggleBtn'), toggleTheme);
+      addHapticToElement(document.getElementById('moreOptionsBtn'), showActionSheet);
+      addHapticToElement(document.getElementById('addDeviceBtn'), addDevice);
+      addHapticToElement(document.getElementById('refreshItem'), refreshDevices);
+      addHapticToElement(document.getElementById('hapticsItem'), showHapticsSheet);
+      addHapticToElement(document.getElementById('logoutItem'), logout);
+    }
+
+    function connectMQTT() {
+      const statusIndicator = document.getElementById('mqttStatus');
+      try {
+        mqttClient = mqtt.connect('wss://64611cb98d5946f6a3925fe3c7fe3b65.s1.eu.hivemq.cloud:8884/mqtt', {
+          username: 'AADA_IOT_Dev',
+          password: 'Aada@008'
+        });
+
+        mqttClient.on('connect', () => {
+          console.log('MQTT Connected');
+          statusIndicator.className = 'status-dot connected';
+          const fetchTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/fetch`;
+          mqttClient.subscribe(fetchTopic, (err) => {
+            if (!err) {
+              deviceListTimeout = setTimeout(() => {
+                if (devices.length === 0) renderDevices();
+              }, 5000);
+            }
+          });
+        });
+
+        mqttClient.on('message', (topic, message) => handleMQTTMessage(topic, message));
+
+        mqttClient.on('error', () => {
+          statusIndicator.className = 'status-dot disconnected';
+          if (devices.length === 0) renderDevices();
+        });
+
+        mqttClient.on('close', () => {
+          statusIndicator.className = 'status-dot disconnected';
+          if (devices.length === 0) renderDevices();
+        });
+
+      } catch (error) {
+        statusIndicator.className = 'status-dot disconnected';
+        renderDevices();
+      }
+    }
+
+    function handleMQTTMessage(topic, message) {
+      const topicParts = topic.split('/');
+      try {
+        const data = JSON.parse(message.toString());
+        if (data.device_list && Array.isArray(data.device_list)) {
+          clearTimeout(deviceListTimeout);
+          devices = data.device_list;
+          renderDevices();
+          devices.forEach(device => {
+            const statusTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${device.device_id}/status`;
+            mqttClient.subscribe(statusTopic);
+            const ofTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${device.device_id}/OF`;
+            mqttClient.subscribe(ofTopic);
+          });
+          checkAllDevicesStatus();
+        }
+      } catch (e) {}
+
+      if (topicParts[topicParts.length - 1] === 'OF') {
+        const deviceId = topicParts[topicParts.length - 2];
+        const rawMessage = message.toString().trim();
+        const lowerMessage = rawMessage.toLowerCase();
+
+        if (lowerMessage === 'check_status') {
+          return;
+        }
+
+        if (deviceTimeouts[deviceId]) {
+          clearTimeout(deviceTimeouts[deviceId]);
+          delete deviceTimeouts[deviceId];
+        }
+
+        const displayMessage = (lowerMessage === 'offline') ? 'offline' : rawMessage;
+        deviceOnlineStatus[deviceId] = displayMessage;
+
+        const isOnline = lowerMessage !== 'offline';
+        updateDeviceOnlineStatus(deviceId, displayMessage, isOnline);
+      }
+    }
+
+    function renderDevices() {
+      if (renderTimeout) clearTimeout(renderTimeout);
+      renderTimeout = setTimeout(() => {
+        const grid = document.getElementById('deviceGrid');
+        const countEl = document.getElementById('deviceCount');
+        countEl.textContent = `${devices.length} ${devices.length === 1 ? 'device' : 'devices'}`;
+
+        if (devices.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M9 12h6M12 9v6"/>
+                </svg>
+              </div>
+              <div class="empty-title">No Devices Found</div>
+              <div class="empty-subtitle">Tap the + button to add your first smart device and start automating your home</div>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = '';
+
+        // Separate online and offline/checking devices
+        const onlineDevices = devices.filter(d => 
+          deviceOnlineStatus[d.device_id] !== 'offline' && 
+          deviceOnlineStatus[d.device_id] !== 'Checking...'
+        );
+        
+        const offlineDevices = devices.filter(d => 
+          deviceOnlineStatus[d.device_id] === 'offline' || 
+          deviceOnlineStatus[d.device_id] === 'Checking...'
+        );
+
+        // Sort both groups by rank
+        onlineDevices.sort((a, b) => a.device_rank - b.device_rank);
+        offlineDevices.sort((a, b) => a.device_rank - b.device_rank);
+
+        // Combine: online devices first, then offline
+        const sortedDevices = [...onlineDevices, ...offlineDevices];
+
+        sortedDevices.forEach(device => {
+          const displayMessage = deviceOnlineStatus[device.device_id] || 'offline';
+          const isOnline = !(displayMessage === 'offline' || displayMessage === 'Checking...');
+
+          const card = document.createElement('div');
+          card.className = `device-card${isOnline ? ' online' : ''}`;
+          card.dataset.deviceId = device.device_id;
+          card.innerHTML = `
+            <div class="device-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="4" width="16" height="16" rx="2"/>
+                <rect x="9" y="9" width="6" height="6"/>
+                <path d="M12 16h.01"/>
+              </svg>
+            </div>
+            <div class="device-name">${device.device_id}</div>
+            <div class="device-rank">Rank ${device.device_rank}</div>
+            <div class="device-status ${displayMessage === 'Checking...' ? 'checking' : (isOnline ? 'online' : 'offline')}">
+              <span class="status-dot-small ${displayMessage === 'Checking...' ? 'checking' : (isOnline ? 'online' : 'offline')}"></span>
+              <span>${displayMessage}</span>
+            </div>`;
+          
+          addHapticToElement(card, () => openDeviceControl(device.device_id));
+          grid.appendChild(card);
+        });
+      }, 80); // small debounce to prevent too frequent re-renders
+    }
+
+    function updateDeviceOnlineStatus(deviceId, message, isOnline) {
+      document.querySelectorAll('.device-card').forEach(card => {
+        if (card.dataset.deviceId === deviceId) {
+          card.classList.toggle('online', isOnline);
+
+          const statusEl = card.querySelector('.device-status');
+          const dotEl = card.querySelector('.status-dot-small');
+          const textEl = statusEl.querySelector('span:last-child');
+
+          const isChecking = message === 'Checking...';
+          statusEl.className = `device-status ${isChecking ? 'checking' : (isOnline ? 'online' : 'offline')}`;
+          dotEl.className = `status-dot-small ${isChecking ? 'checking' : (isOnline ? 'online' : 'offline')}`;
+          textEl.textContent = message;
+        }
+      });
+      renderDevices(); // Re-sort and re-render after status update
+    }
+
+    function checkAllDevicesStatus() {
+      devices.forEach(d => {
+        deviceOnlineStatus[d.device_id] = 'Checking...';
+        updateDeviceOnlineStatus(d.device_id, 'Checking...', false);
+
+        const ofTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${d.device_id}/OF`;
+        clearTimeout(deviceTimeouts[d.device_id]);
+        mqttClient.publish(ofTopic, 'check_status');
+
+        deviceTimeouts[d.device_id] = setTimeout(() => {
+          if (deviceOnlineStatus[d.device_id] === 'Checking...') {
+            deviceOnlineStatus[d.device_id] = 'offline';
+            updateDeviceOnlineStatus(d.device_id, 'offline', false);
+          }
+        }, 5000);
+      });
+    }
+
+    function openDeviceControl(deviceId) {
+      sessionStorage.setItem('active_device', deviceId);
+      
+      // Pass current device status to controller for instant load
+      const currentDeviceStatus = {
+        status: deviceOnlineStatus[deviceId] || 'unknown',
+        isOnline: deviceOnlineStatus[deviceId] !== 'offline' && 
+                  deviceOnlineStatus[deviceId] !== 'Checking...' &&
+                  deviceOnlineStatus[deviceId] !== 'unknown',
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('device_status_cache', JSON.stringify(currentDeviceStatus));
+      
+      window.location.href = 'control.html';
+    }
+
+    function addDevice() {
+      hideActionSheet();
+      const deviceId = 'AADA-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+      sessionStorage.setItem('provisioning', JSON.stringify({
+        email: currentUser.email,
+        password: currentUser.password,
+        hashed_email: currentUser.hashed_email,
+        hashed_password: currentUser.hashed_password,
+        device_id: deviceId
+      }));
+      window.location.href = 'wifi_setup.html';
+    }
+
+    function refreshDevices() {
+      hideActionSheet();
+      if (!mqttClient || !mqttClient.connected) {
+        alert('Not connected to server');
+        return;
+      }
+      checkAllDevicesStatus();
+      const grid = document.getElementById('deviceGrid');
+      grid.style.opacity = '0.6';
+      setTimeout(() => grid.style.opacity = '1', 400);
+    }
+
+    function logout() {
+      hideActionSheet();
+      if (confirm('Are you sure you want to logout?')) {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+      }
+    }
+
+    window.onload = init;
+  </script>
+</body>
+</html>
