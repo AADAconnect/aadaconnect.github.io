@@ -1035,9 +1035,9 @@
       powerDisplay.className = 'power-display power-pending';
       statusLabel.textContent = 'PENDING';
       
-      const commandText = command === '1' ? 'TURN ON' : 'TURN OFF';
+      const commandText = command === '1' ? 'ON' : 'OFF';
       
-      statusMessage.textContent = `Sending ${commandText}...`;
+      statusMessage.textContent = `Turning ${commandText}...`;
       statusMessage.className = 'status-message status-pending';
 
       pendingStartTime = Date.now();
