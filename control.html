@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AADA - Device Control</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e27;
+      --bg-secondary: #131a35;
+      --bg-tertiary: #1a2342;
+      --surface: rgba(26, 35, 66, 0.6);
+      --surface-elevated: rgba(26, 35, 66, 0.9);
+      
+      --text-primary: #e8eaf6;
+      --text-secondary: #9fa8da;
+      --text-tertiary: #5c6bc0;
+      
+      --accent-primary: #00e5ff;
+      --accent-secondary: #18ffff;
+      --accent-glow: rgba(0, 229, 255, 0.3);
+      
+      --success-primary: #00e676;
+      --success-secondary: #69f0ae;
+      --success-glow: rgba(0, 230, 118, 0.3);
+      
+      --danger-primary: #ff1744;
+      --danger-secondary: #ff5252;
+      --danger-glow: rgba(255, 23, 68, 0.3);
+      
+      --warning-primary: #00bcd4;
+      --warning-secondary: #26c6da;
+      --warning-glow: rgba(0, 188, 212, 0.3);
+      
+      --neutral-primary: #607d8b;
+      --neutral-secondary: #78909c;
+      --neutral-glow: rgba(96, 125, 139, 0.2);
+      
+      --glass-strong: rgba(255, 255, 255, 0.08);
+      --glass-medium: rgba(255, 255, 255, 0.05);
+      --glass-subtle: rgba(255, 255, 255, 0.02);
+      
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --border-medium: rgba(255, 255, 255, 0.15);
+      
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+      --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.6);
+      
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      --transition-spring: 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    body.light-mode {
+      --bg-primary: #f5f7fa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #e8ecf1;
+      --surface: rgba(255, 255, 255, 0.8);
+      --surface-elevated: rgba(255, 255, 255, 0.95);
+      
+      --text-primary: #1a2332;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      
+      --accent-primary: #0066ff;
+      --accent-secondary: #3d8bfd;
+      --accent-glow: rgba(0, 102, 255, 0.2);
+      
+      --success-primary: #10b981;
+      --success-secondary: #34d399;
+      --success-glow: rgba(16, 185, 129, 0.2);
+      
+      --danger-primary: #ef4444;
+      --danger-secondary: #f87171;
+      --danger-glow: rgba(239, 68, 68, 0.2);
+      
+      --warning-primary: #0891b2;
+      --warning-secondary: #06b6d4;
+      --warning-glow: rgba(8, 145, 178, 0.2);
+      
+      --neutral-primary: #64748b;
+      --neutral-secondary: #94a3b8;
+      --neutral-glow: rgba(100, 116, 139, 0.15);
+      
+      --glass-strong: rgba(255, 255, 255, 0.9);
+      --glass-medium: rgba(255, 255, 255, 0.7);
+      --glass-subtle: rgba(255, 255, 255, 0.5);
+      
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.12);
+      
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.12);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16);
+      --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      transition: background var(--transition-smooth), color var(--transition-smooth);
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 50%, var(--bg-secondary) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, var(--bg-tertiary) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 20%, var(--accent-glow) 0%, transparent 60%);
+      animation: gradientShift 20s ease infinite;
+      opacity: 0.6;
+      z-index: 0;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(5%, 5%) rotate(90deg); }
+      50% { transform: translate(-5%, 5%) rotate(180deg); }
+      75% { transform: translate(-5%, -5%) rotate(270deg); }
+    }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: float 15s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% {
+        transform: translateY(-100vh) translateX(50px);
+        opacity: 0;
+      }
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: calc(env(safe-area-inset-top, 0.5rem) + 0.75rem) 1.25rem 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn {
+      position: relative;
+      background: var(--glass-strong);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-medium);
+      color: var(--text-primary);
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--accent-glow), transparent);
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+    }
+
+    .btn:hover::before {
+      opacity: 0.5;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .back-button {
+      padding: 0.75rem 1.25rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .theme-toggle-btn {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      justify-content: center;
+      border-radius: 14px;
+    }
+
+    .theme-icon {
+      width: 22px;
+      height: 22px;
+      transition: transform var(--transition-smooth);
+    }
+
+    .theme-toggle-btn:active .theme-icon {
+      transform: rotate(180deg);
+    }
+
+    #refreshButton:active .theme-icon {
+      transform: rotate(360deg);
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top, 0rem) + 5.5rem) 1.25rem calc(env(safe-area-inset-bottom, 0rem) + 2rem);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      overflow-y: auto;
+      margin-bottom: calc(40px + env(safe-area-inset-bottom));
+    }
+
+    .device-name-container {
+      width: 100%;
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--border-medium);
+      border-radius: 24px;
+      padding: 1.75rem 2rem;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      animation: slideDown 0.5s var(--transition-bounce);
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .device-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      opacity: 0.9;
+    }
+
+    .device-name {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+
+    .connection-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.5rem 1rem;
+      background: var(--glass-medium);
+      backdrop-filter: blur(8px);
+      border-radius: 20px;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--neutral-primary);
+      box-shadow: 0 0 12px currentColor;
+      transition: all var(--transition-smooth);
+    }
+
+    .status-dot.connected-dot {
+      background: var(--success-primary);
+      color: var(--success-primary);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.disconnected-dot {
+      background: var(--danger-primary);
+      color: var(--danger-primary);
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.15);
+      }
+    }
+
+    .power-display {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1;
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(180%);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      box-shadow: var(--shadow-lg);
+      animation: scaleIn 0.6s var(--transition-bounce) 0.1s both;
+      user-select: none;
+      margin-top: auto;
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .power-display::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--neutral-primary), var(--neutral-secondary));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.6;
+      transition: all var(--transition-smooth);
+    }
+
+    .power-display:active {
+      transform: scale(0.96);
+    }
+
+    .power-display.power-on::before {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      opacity: 1;
+    }
+
+    .power-display.power-off::before {
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      opacity: 1;
+    }
+
+    .power-display.power-pending::before {
+      background: linear-gradient(135deg, var(--warning-primary), var(--warning-secondary));
+      opacity: 1;
+    }
+
+    .power-display.power-offline::before {
+      background: linear-gradient(135deg, #64748b, #94a3b8);
+      opacity: 0.7;
+    }
+
+    .power-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--accent-primary);
+      opacity: 0;
+      transition: all var(--transition-smooth);
+    }
+
+    .power-ring.rotating {
+      opacity: 1;
+      animation: rotate 1.5s linear infinite;
+    }
+
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .power-icon {
+      width: 80px;
+      height: 80px;
+      transition: all var(--transition-smooth);
+      filter: drop-shadow(0 4px 12px var(--neutral-glow));
+    }
+
+    .power-display.power-on .power-icon {
+      color: #10b981;
+      filter: drop-shadow(0 4px 12px rgba(16, 185, 129, 0.4));
+      transform: scale(1.1);
+    }
+
+    .power-display.power-off .power-icon {
+      color: #ef4444;
+      filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4));
+    }
+
+    .power-display.power-pending .power-icon {
+      color: var(--warning-primary);
+      filter: drop-shadow(0 4px 12px var(--warning-glow));
+    }
+
+    .power-display.power-offline .power-icon {
+      color: #64748b;
+      filter: drop-shadow(0 4px 12px rgba(100, 116, 139, 0.3));
+      opacity: 0.7;
+    }
+
+    .power-status-label {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: all var(--transition-smooth);
+    }
+
+    .power-display.power-on .power-status-label {
+      color: #10b981;
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .power-display.power-off .power-status-label {
+      color: #ef4444;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .power-display.power-pending .power-status-label {
+      color: var(--warning-primary);
+      text-shadow: 0 0 20px var(--warning-glow);
+    }
+
+    .power-display.power-offline .power-status-label {
+      color: #64748b;
+      text-shadow: 0 0 20px rgba(100, 116, 139, 0.3);
+    }
+
+    .power-display.success-animation {
+      animation: successPulse 0.5s ease-out;
+    }
+
+    @keyframes successPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .status-message {
+      width: 100%;
+      text-align: center;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--border-medium);
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-smooth);
+      animation: fadeIn 0.5s ease-out 0.2s both;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .status-message.status-on {
+      color: #10b981;
+      border-color: #10b981;
+      background: linear-gradient(135deg, var(--glass-subtle), rgba(16, 185, 129, 0.2));
+    }
+
+    .status-message.status-off {
+      color: #ef4444;
+      border-color: #ef4444;
+      background: linear-gradient(135deg, var(--glass-subtle), rgba(239, 68, 68, 0.2));
+    }
+
+    .status-message.status-pending {
+      color: var(--warning-primary);
+      border-color: var(--warning-primary);
+      background: linear-gradient(135deg, var(--glass-subtle), var(--warning-glow));
+    }
+
+    .status-message.status-offline {
+      color: #64748b;
+      border-color: #64748b;
+      background: linear-gradient(135deg, var(--glass-subtle), rgba(100, 116, 139, 0.2));
+    }
+
+    .status-message.status-checking {
+      color: var(--text-secondary);
+      border-color: var(--border-medium);
+      background: linear-gradient(135deg, var(--glass-subtle), var(--glass-medium));
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        padding: calc(env(safe-area-inset-top, 0rem) + 5rem) 1rem calc(env(safe-area-inset-bottom, 0rem) + 1.5rem);
+      }
+
+      .device-name {
+        font-size: 1.6rem;
+      }
+
+      .power-display {
+        max-width: 280px;
+      }
+
+      .power-icon {
+        width: 64px;
+        height: 64px;
+      }
+
+      .power-status-label {
+        font-size: 1.4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+
+  <header class="header">
+    <button id="backButton" class="btn back-button">
+      <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back
+    </button>
+    <div class="header-actions">
+      <button id="refreshButton" class="btn theme-toggle-btn" title="Refresh device status">
+        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+        </svg>
+      </button>
+      <button id="themeButton" class="btn theme-toggle-btn">
+        <svg class="theme-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="device-name-container">
+      <div class="device-label">Device</div>
+      <div class="device-name" id="deviceName">Loading...</div>
+      <div class="connection-indicator">
+        <span class="status-dot" id="mqttDot"></span>
+        <span id="connectionText">Connecting...</span>
+      </div>
+    </div>
+
+    <div class="power-display power-offline" id="powerDisplay">
+      <div class="power-ring"></div>
+      <svg class="power-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2v10"/>
+        <path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+      </svg>
+      <div class="power-status-label">CHECKING</div>
+    </div>
+
+    <div class="status-message status-checking" id="statusMessage">Checking device status...</div>
+  </div>
+
+  <script>
+    let mqttClient = null;
+    let deviceId = null;
+    let currentUser = null;
+    let controlTopic = null;
+    let statusTopic = null;
+    let ofTopic = null;
+    
+    let currentStatus = 'OFF';
+    let lastKnownStatus = null;
+    let isOnline = false;
+    let pendingCommand = null;
+    let pendingStartTime = null;
+    
+    // Device online checking (dashboard logic)
+    let deviceOnlineStatus = {};
+    let deviceTimeout = null;
+    let onlineCheckTimeout = null;
+    let statusTimeout = null;
+    let offlineRecheckInterval = null; // For periodic background checks
+
+    function createParticles() {
+      const particlesContainer = document.getElementById('particles');
+      const particleCount = 30;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 15 + 's';
+        particle.style.animationDuration = (10 + Math.random() * 10) + 's';
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    function shouldHapticController() {
+      return localStorage.getItem('hapticsController') === 'true';
+    }
+
+    function shouldHapticAll() {
+      return localStorage.getItem('hapticsAll') === 'true';
+    }
+
+    function getHapticIntensity() {
+      const saved = localStorage.getItem('hapticsIntensity');
+      return saved ? parseInt(saved) : 50;
+    }
+
+    function hapticFeedback(duration) {
+      if ('vibrate' in navigator && duration > 0) {
+        navigator.vibrate(duration);
+      }
+    }
+
+    function withHaptic(fn) {
+      return function(event) {
+        const targetId = event.currentTarget.id;
+        const isPowerButton = targetId === 'powerDisplay';
+
+        if (shouldHapticAll() || (shouldHapticController() && isPowerButton)) {
+          hapticFeedback(getHapticIntensity());
+        }
+
+        if (fn) fn(event);
+      };
+    }
+
+    function init() {
+      createParticles();
+      loadTheme();
+
+      deviceId = sessionStorage.getItem('active_device');
+      if (!deviceId) {
+        alert('No device selected');
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      const userStr = sessionStorage.getItem('current_user');
+      if (!userStr) {
+        alert('Not logged in');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        currentUser = JSON.parse(userStr);
+      } catch {
+        alert('Session error');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      document.getElementById('deviceName').textContent = deviceId;
+
+      controlTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/control`;
+      statusTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/status`;
+      ofTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/OF`;
+
+      // Load cached status from dashboard if available (with validation)
+      try {
+        const cachedStatus = sessionStorage.getItem('device_status_cache');
+        if (cachedStatus) {
+          const cache = JSON.parse(cachedStatus);
+          
+          // Validate cache structure and data
+          if (cache && typeof cache === 'object') {
+            const cacheAge = Date.now() - (cache.timestamp || 0);
+            const maxCacheAge = 10000; // 10 seconds - cache expires after this
+            
+            // Only use cache if it's recent and has valid status
+            if (cacheAge < maxCacheAge && cache.status && typeof cache.status === 'string') {
+              const validStatuses = ['ON', 'OFF', 'offline'];
+              const normalizedStatus = cache.status.toUpperCase();
+              
+              if (validStatuses.includes(normalizedStatus) || validStatuses.includes(cache.status)) {
+                if (cache.status === 'offline') {
+                  // Device was offline in dashboard - don't trust lastKnownStatus from cache
+                  console.log('Cached status: Device was offline');
+                  lastKnownStatus = null;
+                  isOnline = false;
+                  deviceOnlineStatus[deviceId] = 'offline';
+                  goOffline();
+                } else if (normalizedStatus === 'ON' || normalizedStatus === 'OFF') {
+                  // Device was online with valid status
+                  console.log('Cached status:', normalizedStatus, '(online:', cache.isOnline, ')');
+                  currentStatus = normalizedStatus;
+                  lastKnownStatus = normalizedStatus;
+                  isOnline = cache.isOnline === true;
+                  deviceOnlineStatus[deviceId] = normalizedStatus;
+                  
+                  // Display cached status immediately for better UX
+                  if (normalizedStatus === 'ON') {
+                    const powerDisplay = document.getElementById('powerDisplay');
+                    const statusLabel = powerDisplay.querySelector('.power-status-label');
+                    powerDisplay.className = 'power-display power-on';
+                    statusLabel.textContent = 'ON';
+                    
+                    const statusMessage = document.getElementById('statusMessage');
+                    statusMessage.textContent = 'Device is ON';
+                    statusMessage.className = 'status-message status-on';
+                  } else if (normalizedStatus === 'OFF') {
+                    const powerDisplay = document.getElementById('powerDisplay');
+                    const statusLabel = powerDisplay.querySelector('.power-status-label');
+                    powerDisplay.className = 'power-display power-off';
+                    statusLabel.textContent = 'OFF';
+                    
+                    const statusMessage = document.getElementById('statusMessage');
+                    statusMessage.textContent = 'Device is OFF';
+                    statusMessage.className = 'status-message status-off';
+                  }
+                } else {
+                  console.log('Invalid cached status, will check live');
+                }
+              } else {
+                console.log('Cached status not in valid list, will check live');
+              }
+            } else {
+              console.log('Cached status too old or invalid, will check live');
+            }
+          } else {
+            console.log('Invalid cache structure');
+          }
+          
+          // Always remove cache after reading (single-use)
+          sessionStorage.removeItem('device_status_cache');
+        }
+      } catch (e) {
+        console.error('Error reading cached status:', e);
+        // Clean up potentially corrupted cache
+        sessionStorage.removeItem('device_status_cache');
+      }
+
+      connectMQTT();
+    }
+
+    function connectMQTT() {
+      const statusIndicator = document.getElementById('mqttDot');
+      const connectionText = document.getElementById('connectionText');
+
+      try {
+          mqttClient = mqtt.connect('wss://y1dda1f8.ala.asia-southeast1.emqxsl.com:8084/mqtt', {
+          username: 'AADAconnect',
+          password: 'wMhtXcU86UtV-48'
+        });
+
+        mqttClient.on('connect', () => {
+          console.log('MQTT Connected');
+          updateConnectionStatus(true);
+
+          // Subscribe to both status and OF topics
+          mqttClient.subscribe(statusTopic, (err) => {
+            if (err) console.error('Status subscription error:', err);
+          });
+
+          mqttClient.subscribe(ofTopic, (err) => {
+            if (err) console.error('OF subscription error:', err);
+            else {
+              // Always check device online status (dashboard logic)
+              // This will verify/override cached status if device state changed
+              checkDeviceStatus();
+            }
+          });
+        });
+
+        mqttClient.on('message', (topic, message) => {
+          handleMQTTMessage(topic, message);
+        });
+
+        mqttClient.on('error', (err) => {
+          console.error('MQTT error:', err);
+          updateConnectionStatus(false);
+        });
+
+        mqttClient.on('close', () => {
+          console.log('MQTT disconnected');
+          updateConnectionStatus(false);
+        });
+
+      } catch (error) {
+        console.error('MQTT connection failed:', error);
+        updateConnectionStatus(false);
+      }
+    }
+
+    function handleMQTTMessage(topic, message) {
+      const topicParts = topic.split('/');
+      const lastPart = topicParts[topicParts.length - 1];
+
+      // Handle OF topic messages (online/offline checking - dashboard logic)
+      if (lastPart === 'OF') {
+        const rawMessage = message.toString().trim();
+        const lowerMessage = rawMessage.toLowerCase();
+
+        // Ignore check_status echo
+        if (lowerMessage === 'check_status') {
+          return;
+        }
+
+        // Clear the timeout - we got a response
+        if (deviceTimeout) {
+          clearTimeout(deviceTimeout);
+          deviceTimeout = null;
+        }
+
+        if (onlineCheckTimeout) {
+          clearTimeout(onlineCheckTimeout);
+          onlineCheckTimeout = null;
+        }
+
+        // Check if device reports offline
+        if (lowerMessage === 'offline') {
+          console.log('Device reports offline status');
+          deviceOnlineStatus[deviceId] = 'offline';
+          goOffline();
+          return;
+        }
+
+        // Device is online - store the OF message
+        console.log('Device is online, OF status:', rawMessage);
+        deviceOnlineStatus[deviceId] = rawMessage;
+        isOnline = true;
+
+        // Stop background rechecking since device is now online
+        stopOfflineRecheck();
+
+        // Update both status message AND power display to show device is online
+        const statusMessage = document.getElementById('statusMessage');
+        const powerDisplay = document.getElementById('powerDisplay');
+        const statusLabel = powerDisplay.querySelector('.power-status-label');
+        
+        if (!pendingCommand) {
+          // Only update if not in pending state
+          if (currentStatus === 'ON') {
+            // Update power display
+            powerDisplay.className = 'power-display power-on';
+            statusLabel.textContent = 'ON';
+            // Update status message
+            statusMessage.textContent = 'Device is ON';
+            statusMessage.className = 'status-message status-on';
+          } else if (currentStatus === 'OFF') {
+            // Update power display
+            powerDisplay.className = 'power-display power-off';
+            statusLabel.textContent = 'OFF';
+            // Update status message
+            statusMessage.textContent = 'Device is OFF';
+            statusMessage.className = 'status-message status-off';
+          } else {
+            // Unknown status - show as checking
+            statusMessage.textContent = 'Device is online';
+            statusMessage.className = 'status-message status-checking';
+          }
+        }
+      }
+
+      // Handle status topic messages
+      if (lastPart === 'status') {
+        const status = message.toString().trim().toUpperCase();
+        console.log('Status update received:', status);
+        handleStatusUpdate(status);
+      }
+    }
+
+    // Dashboard-like device status checking
+    function checkDeviceStatus() {
+      console.log('Checking device status...');
+      
+      // Check if we have a valid cached status that's already displayed
+      const hadValidCache = (deviceOnlineStatus[deviceId] === 'ON' || 
+                            deviceOnlineStatus[deviceId] === 'OFF');
+      
+      // Mark internally as checking, but don't update UI if we have valid cache
+      const previousStatus = deviceOnlineStatus[deviceId];
+      deviceOnlineStatus[deviceId] = 'Checking...';
+      
+      const statusMessage = document.getElementById('statusMessage');
+      const powerDisplay = document.getElementById('powerDisplay');
+      
+      if (!pendingCommand && !hadValidCache) {
+        // Only show "Checking..." message if we didn't have cached data
+        statusMessage.textContent = 'Checking device status...';
+        statusMessage.className = 'status-message status-checking';
+        
+        // Set power display to offline state while checking
+        powerDisplay.className = 'power-display power-offline';
+        const statusLabel = powerDisplay.querySelector('.power-status-label');
+        statusLabel.textContent = 'CHECKING';
+      }
+      
+      // Clear any existing timeout
+      if (deviceTimeout) {
+        clearTimeout(deviceTimeout);
+      }
+      
+      if (onlineCheckTimeout) {
+        clearTimeout(onlineCheckTimeout);
+      }
+      
+      // Publish check_status to OF topic
+      mqttClient.publish(ofTopic, 'check_status');
+      
+      // Wait 5 seconds for response (dashboard logic)
+      onlineCheckTimeout = setTimeout(() => {
+        // No response means device is offline
+        if (deviceOnlineStatus[deviceId] === 'Checking...') {
+          console.log('No response from device - marking as offline');
+          deviceOnlineStatus[deviceId] = 'offline';
+          goOffline();
+        }
+      }, 5000);
+    }
+
+    function updateConnectionStatus(connected) {
+      const dot = document.getElementById('mqttDot');
+      const text = document.getElementById('connectionText');
+
+      if (connected) {
+        dot.className = 'status-dot connected-dot';
+        text.textContent = 'Connected';
+      } else {
+        dot.className = 'status-dot disconnected-dot';
+        text.textContent = 'Disconnected';
+      }
+    }
+
+    function showPendingState(command) {
+      const powerDisplay = document.getElementById('powerDisplay');
+      const statusMessage = document.getElementById('statusMessage');
+      const statusLabel = powerDisplay.querySelector('.power-status-label');
+      const powerRing = document.querySelector('.power-ring');
+
+      powerRing.classList.add('rotating');
+
+      powerDisplay.className = 'power-display power-pending';
+      statusLabel.textContent = 'PENDING';
+      
+      const commandText = command === '1' ? 'ON' : 'OFF';
+      
+      statusMessage.textContent = `Turning ${commandText}...`;
+      statusMessage.className = 'status-message status-pending';
+
+      pendingStartTime = Date.now();
+    }
+
+    function hidePendingState(success = true) {
+      const powerDisplay = document.getElementById('powerDisplay');
+      const powerRing = document.querySelector('.power-ring');
+      
+      powerRing.classList.remove('rotating');
+      
+      if (success) {
+        powerDisplay.classList.add('success-animation');
+        setTimeout(() => {
+          powerDisplay.classList.remove('success-animation');
+        }, 500);
+      }
+      
+      pendingCommand = null;
+      pendingStartTime = null;
+    }
+
+    function handleStatusUpdate(status) {
+      // Clear online check timeout - we got a response
+      if (onlineCheckTimeout) {
+        clearTimeout(onlineCheckTimeout);
+        onlineCheckTimeout = null;
+      }
+      
+      if (statusTimeout) {
+        clearTimeout(statusTimeout);
+        statusTimeout = null;
+      }
+
+      const lowerStatus = status.toLowerCase();
+      
+      // Check if device explicitly says it's offline
+      if (lowerStatus === 'offline') {
+        goOffline();
+        return;
+      }
+
+      // Only mark as online if status is valid (ON or OFF)
+      if (status === 'ON' || status === 'OFF') {
+        isOnline = true;
+        
+        // Stop background rechecking since device is now online
+        stopOfflineRecheck();
+        
+        // Update the OF status to reflect online state
+        if (deviceOnlineStatus[deviceId] === 'Checking...' || deviceOnlineStatus[deviceId] === 'offline') {
+          deviceOnlineStatus[deviceId] = status;
+        }
+        
+        const wasConfirmed = pendingCommand !== null && 
+                             ((pendingCommand === '1' && status === 'ON') ||
+                              (pendingCommand === '0' && status === 'OFF'));
+        
+        if (wasConfirmed) {
+          console.log('Command confirmed by device!');
+          hidePendingState(true);
+          
+          if (shouldHapticController() || shouldHapticAll()) {
+            hapticFeedback(getHapticIntensity());
+          }
+        }
+
+        currentStatus = status;
+        lastKnownStatus = status;
+
+        const powerDisplay = document.getElementById('powerDisplay');
+        const statusMessage = document.getElementById('statusMessage');
+        const statusLabel = powerDisplay.querySelector('.power-status-label');
+
+        if (status === 'ON') {
+          powerDisplay.className = 'power-display power-on';
+          statusLabel.textContent = 'ON';
+          statusMessage.textContent = 'Device is ON';
+          statusMessage.className = 'status-message status-on';
+        } else {
+          powerDisplay.className = 'power-display power-off';
+          statusLabel.textContent = 'OFF';
+          statusMessage.textContent = 'Device is OFF';
+          statusMessage.className = 'status-message status-off';
+        }
+      } else {
+        // Invalid/unknown status
+        console.log('Invalid status received:', status);
+        goOffline();
+      }
+    }
+
+    function goOffline() {
+      isOnline = false;
+      deviceOnlineStatus[deviceId] = 'offline';
+      hidePendingState(false);
+      
+      const powerDisplay = document.getElementById('powerDisplay');
+      const statusMessage = document.getElementById('statusMessage');
+      const statusLabel = powerDisplay.querySelector('.power-status-label');
+
+      powerDisplay.className = 'power-display power-offline';
+      statusLabel.textContent = 'OFFLINE';
+
+      // Show last known status from statusTopic (dashboard logic)
+      if (lastKnownStatus === 'ON') {
+        statusMessage.textContent = 'Last known: ON (offline)';
+        statusMessage.className = 'status-message status-offline';
+      } else if (lastKnownStatus === 'OFF') {
+        statusMessage.textContent = 'Last known: OFF (offline)';
+        statusMessage.className = 'status-message status-offline';
+      } else {
+        statusMessage.textContent = 'Device is offline';
+        statusMessage.className = 'status-message status-offline';
+      }
+
+      // Start periodic background rechecking for offline devices
+      startOfflineRecheck();
+    }
+
+    function startOfflineRecheck() {
+      // Clear any existing recheck interval
+      if (offlineRecheckInterval) {
+        clearInterval(offlineRecheckInterval);
+      }
+
+      // Recheck every 10 seconds in the background
+      offlineRecheckInterval = setInterval(() => {
+        if (!isOnline && mqttClient && mqttClient.connected) {
+          console.log('Background recheck: Device still offline, checking again...');
+          checkDeviceStatus();
+        } else if (isOnline) {
+          // Device came back online, stop rechecking
+          stopOfflineRecheck();
+        }
+      }, 10000); // Check every 10 seconds
+    }
+
+    function stopOfflineRecheck() {
+      if (offlineRecheckInterval) {
+        clearInterval(offlineRecheckInterval);
+        offlineRecheckInterval = null;
+        console.log('Device is online, stopped background rechecking');
+      }
+    }
+
+    function performTogglePower() {
+      if (!mqttClient || !mqttClient.connected) {
+        alert('Not connected to server');
+        return;
+      }
+
+      if (!isOnline) {
+        alert('Device is offline');
+        return;
+      }
+
+      if (pendingCommand !== null) {
+        return; // Prevent double-tap
+      }
+
+      const command = (currentStatus === 'ON') ? '0' : '1';
+      pendingCommand = command;
+
+      showPendingState(command);
+
+      mqttClient.publish(controlTopic, command);
+      console.log('Command sent:', command);
+
+      // Timeout for offline detection
+      if (statusTimeout) clearTimeout(statusTimeout);
+      statusTimeout = setTimeout(() => {
+        console.log('No response - device offline');
+        goOffline();
+      }, 5000);
+    }
+
+    function performToggleTheme() {
+      document.body.classList.toggle('light-mode');
+      const isLight = document.body.classList.contains('light-mode');
+      localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    }
+
+    function performRefresh() {
+      if (!mqttClient || !mqttClient.connected) {
+        alert('Not connected to server');
+        return;
+      }
+
+      console.log('Manual refresh triggered');
+      
+      // Visual feedback - make button spin
+      const refreshBtn = document.getElementById('refreshButton');
+      const icon = refreshBtn.querySelector('.theme-icon');
+      icon.style.transform = 'rotate(360deg)';
+      setTimeout(() => {
+        icon.style.transform = 'rotate(0deg)';
+      }, 500);
+
+      // Force a fresh device status check
+      checkDeviceStatus();
+    }
+
+    function performGoBack() {
+      window.location.href = 'dashboard.html';
+    }
+
+    function loadTheme() {
+      const theme = localStorage.getItem('theme');
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+      }
+    }
+
+    window.onload = function() {
+      init();
+
+      document.getElementById('powerDisplay').addEventListener('click', withHaptic(performTogglePower));
+      document.getElementById('backButton').addEventListener('click', withHaptic(performGoBack));
+      document.getElementById('refreshButton').addEventListener('click', withHaptic(performRefresh));
+      document.getElementById('themeButton').addEventListener('click', withHaptic(performToggleTheme));
+    };
+
+    window.onbeforeunload = function() {
+      if (mqttClient && mqttClient.connected) {
+        mqttClient.end();
+      }
+      
+      if (deviceTimeout) {
+        clearTimeout(deviceTimeout);
+      }
+      
+      if (onlineCheckTimeout) {
+        clearTimeout(onlineCheckTimeout);
+      }
+      
+      if (statusTimeout) {
+        clearTimeout(statusTimeout);
+      }
+
+      if (offlineRecheckInterval) {
+        clearInterval(offlineRecheckInterval);
+      }
+    };
+  </script>
+</body>
+</html>
