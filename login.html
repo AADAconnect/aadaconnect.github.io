@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AADA - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: rgba(30, 41, 59, 0.6);
+      --bg-card-hover: rgba(30, 41, 59, 0.8);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-primary: #0ea5e9;
+      --accent-secondary: #10b981;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --error-color: #ef4444;
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+    }
+
+    body.light-mode {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --bg-card-hover: rgba(241, 245, 249, 0.9);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --accent-primary: #0284c7;
+      --accent-secondary: #059669;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --error-color: #dc2626;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    html {
+      height: -webkit-fill-available;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(14, 165, 233, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(16, 185, 129, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    body.light-mode::before {
+      background: radial-gradient(circle at 30% 50%, rgba(2, 132, 199, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(5, 150, 105, 0.08) 0%, transparent 50%);
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 24px;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .login-wrapper {
+      width: 100%;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 48px 32px;
+      box-shadow: var(--shadow-xl);
+      transition: all 0.3s ease;
+    }
+
+    @media (max-width: 480px) {
+      .login-card {
+        padding: 40px 24px;
+      }
+    }
+
+    .logo-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 20px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-lg);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .logo-icon svg {
+      width: 40px;
+      height: 40px;
+      stroke: white;
+      stroke-width: 2;
+    }
+
+    .app-title {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-muted);
+      pointer-events: none;
+      transition: stroke 0.3s ease;
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-muted);
+      cursor: pointer;
+      transition: stroke 0.3s ease;
+      z-index: 10;
+    }
+    
+    .password-toggle:hover {
+      stroke: var(--text-primary);
+    }
+    
+    .password-toggle:active {
+      transform: translateY(-50%) scale(0.95);
+    }
+
+    input {
+      width: 100%;
+      padding: 16px 48px 16px 48px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+    
+    input.no-right-icon {
+      padding-right: 16px;
+    }
+
+    input:focus {
+      border-color: var(--accent-primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+    }
+
+    input:focus + .input-icon {
+      stroke: var(--accent-primary);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .error {
+      color: var(--error-color);
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+      padding-left: 4px;
+      font-weight: 500;
+    }
+
+    .error.show {
+      display: block;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border: none;
+      border-radius: var(--radius-md);
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 8px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .submit-btn:hover::before {
+      left: 100%;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .submit-btn:active {
+      transform: translateY(0);
+    }
+
+    .info-section {
+      margin-top: 32px;
+      padding-top: 28px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .info-text {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .account-info {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: none;
+    }
+
+    .account-info.show {
+      display: block;
+    }
+
+    .account-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .saved-email {
+      color: var(--accent-secondary);
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 16px;
+      word-break: break-all;
+    }
+
+    .clear-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm);
+      color: var(--error-color);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .clear-btn:hover {
+      background: rgba(239, 68, 68, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .clear-btn:active {
+      transform: scale(0.98);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-secondary);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: var(--shadow-xl);
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-content {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .modal-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 24px;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(16, 185, 129, 0.2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-icon svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--accent-primary);
+      stroke-width: 2;
+    }
+
+    .modal-title {
+      color: var(--text-primary);
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .modal-message {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      text-align: center;
+      font-size: 15px;
+    }
+
+    .modal-email {
+      color: var(--accent-secondary);
+      font-weight: 600;
+      word-break: break-all;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: white;
+      box-shadow: var(--shadow-md);
+    }
+
+    .modal-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-btn:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 16px;
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+      }
+      
+      .login-card {
+        padding: 32px 20px;
+      }
+
+      .app-title {
+        font-size: 28px;
+      }
+
+      .modal-content {
+        padding: 28px 24px;
+      }
+
+      .modal-buttons {
+        flex-direction: column;
+      }
+
+      .modal-btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-wrapper">
+      <div class="login-card">
+        <div class="logo-section">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <h1 class="app-title">AADAconnect</h1>
+          <p class="subtitle">Smart Home Control</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <div class="input-wrapper">
+              <input 
+                type="email" 
+                id="email" 
+                class="no-right-icon"
+                placeholder="your@email.com" 
+                required
+              >
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+            </div>
+            <div class="error" id="emailError">Please enter a valid email address</div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <input 
+                type="password" 
+                id="password" 
+                placeholder="Enter your password" 
+                required
+              >
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <svg class="password-toggle" id="togglePassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <div class="error" id="passwordError">Please enter a password</div>
+          </div>
+
+          <div class="error" id="loginError"></div>
+
+          <button type="submit" class="submit-btn">Continue</button>
+        </form>
+
+        <div class="info-section">
+          <p class="info-text">
+            First time? We'll create an account for you automatically
+          </p>
+
+          <div class="account-info" id="accountInfo">
+            <div class="account-label">Currently saved account</div>
+            <div class="saved-email" id="savedEmail"></div>
+            <button class="clear-btn" onclick="clearAccount()">Clear Saved Account</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="switchModal">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="8.5" cy="7" r="4"/>
+          <polyline points="17 11 19 13 23 9"/>
+        </svg>
+      </div>
+      <h2 class="modal-title">Switch Account?</h2>
+      <p class="modal-message">
+        An account (<span class="modal-email" id="existingEmail"></span>) is already saved. 
+        Do you want to switch to the new account?
+      </p>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-secondary" onclick="cancelSwitch()">
+          Cancel
+        </button>
+        <button class="modal-btn modal-btn-primary" onclick="confirmSwitch()">
+          Switch Account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  <script>
+    let pendingAccount = null;
+
+    // Theme management
+    function initTheme() {
+      // Check for saved theme from dashboard
+      let theme = localStorage.getItem('theme');
+      
+      // If no saved theme, use system preference
+      if (!theme) {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        theme = prefersDark ? 'dark' : 'light';
+      }
+      
+      // Apply theme
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+      } else {
+        document.body.classList.remove('light-mode');
+      }
+    }
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      // Only auto-switch if user hasn't manually set a theme
+      if (!localStorage.getItem('theme')) {
+        if (e.matches) {
+          document.body.classList.remove('light-mode');
+        } else {
+          document.body.classList.add('light-mode');
+        }
+      }
+    });
+
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    togglePassword.addEventListener('click', function() {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      
+      // Toggle icon
+      if (type === 'text') {
+        // Eye with slash (hidden password icon)
+        this.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        // Normal eye icon
+        this.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    });
+
+    function hashValue(value) {
+      return CryptoJS.SHA256(value).toString(CryptoJS.enc.Hex);
+    }
+
+    function handleLogin(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const emailError = document.getElementById('emailError');
+      const passwordError = document.getElementById('passwordError');
+      const loginError = document.getElementById('loginError');
+
+      emailError.classList.remove('show');
+      passwordError.classList.remove('show');
+      loginError.classList.remove('show');
+
+      if (!email || !password) {
+        if (!email) emailError.classList.add('show');
+        if (!password) passwordError.classList.add('show');
+        return;
+      }
+
+      const hashedEmail = hashValue(email);
+      const hashedPassword = hashValue(password);
+      const accountKey = hashedEmail + '|' + hashedPassword;
+      
+      const existingAccount = localStorage.getItem('aada_account');
+      const existingEmail = localStorage.getItem('aada_email');
+
+      if (!existingAccount) {
+        saveAccount(email, password, hashedEmail, hashedPassword);
+        loginUser(email, password, hashedEmail, hashedPassword);
+        alert('Account created successfully!');
+        window.location.href = 'dashboard.html';
+      } else if (existingAccount === accountKey) {
+        loginUser(email, password, hashedEmail, hashedPassword);
+        window.location.href = 'dashboard.html';
+      } else {
+        pendingAccount = {
+          email: email,
+          password: password,
+          hashedEmail: hashedEmail,
+          hashedPassword: hashedPassword
+        };
+        
+        document.getElementById('existingEmail').textContent = existingEmail;
+        document.getElementById('switchModal').classList.add('active');
+      }
+    }
+
+    function saveAccount(email, password, hashedEmail, hashedPassword) {
+      const accountKey = hashedEmail + '|' + hashedPassword;
+      localStorage.setItem('aada_account', accountKey);
+      localStorage.setItem('aada_email', email);
+      localStorage.setItem('aada_password', password);
+      localStorage.setItem('aada_hashed_email', hashedEmail);
+      localStorage.setItem('aada_hashed_password', hashedPassword);
+    }
+
+    function loginUser(email, password, hashedEmail, hashedPassword) {
+      sessionStorage.setItem('current_user', JSON.stringify({
+        email: email,
+        password: password,
+        hashed_email: hashedEmail,
+        hashed_password: hashedPassword
+      }));
+    }
+
+    function clearAllAccountData() {
+      localStorage.removeItem('aada_account');
+      localStorage.removeItem('aada_email');
+      localStorage.removeItem('aada_password');
+      localStorage.removeItem('aada_hashed_email');
+      localStorage.removeItem('aada_hashed_password');
+      sessionStorage.clear();
+    }
+
+    function confirmSwitch() {
+      if (!pendingAccount) return;
+
+      clearAllAccountData();
+
+      saveAccount(
+        pendingAccount.email,
+        pendingAccount.password,
+        pendingAccount.hashedEmail,
+        pendingAccount.hashedPassword
+      );
+
+      loginUser(
+        pendingAccount.email,
+        pendingAccount.password,
+        pendingAccount.hashedEmail,
+        pendingAccount.hashedPassword
+      );
+
+      document.getElementById('switchModal').classList.remove('active');
+      pendingAccount = null;
+      
+      alert('Account switched successfully!');
+      window.location.href = 'dashboard.html';
+    }
+
+    function cancelSwitch() {
+      document.getElementById('switchModal').classList.remove('active');
+      pendingAccount = null;
+      
+      const loginError = document.getElementById('loginError');
+      loginError.textContent = 'Please use the saved account or clear it to create a new one';
+      loginError.classList.add('show');
+    }
+
+    function clearAccount() {
+      const savedEmail = localStorage.getItem('aada_email');
+      
+      if (!savedEmail) {
+        alert('No account saved to clear');
+        return;
+      }
+      
+      if (confirm(`Are you sure you want to clear the saved account (${savedEmail})? This will log you out.`)) {
+        clearAllAccountData();
+        location.reload();
+      }
+    }
+
+    function showAccountInfo() {
+      const savedEmail = localStorage.getItem('aada_email');
+      if (savedEmail) {
+        document.getElementById('savedEmail').textContent = savedEmail;
+        document.getElementById('accountInfo').classList.add('show');
+      }
+    }
+
+    window.onload = function() {
+      // Initialize theme first
+      initTheme();
+      
+      const currentUser = sessionStorage.getItem('current_user');
+      if (currentUser) {
+        window.location.href = 'dashboard.html';
+        return;
+      }
+
+      // Remember Me: auto-login if credentials are saved
+      const remembered = localStorage.getItem('remembered_user');
+      if (remembered && localStorage.getItem('rememberMe') === 'true') {
+        try {
+          sessionStorage.setItem('current_user', remembered);
+          window.location.href = 'dashboard.html';
+          return;
+        } catch(e) {}
+      }
+      
+      showAccountInfo();
+    };
+  </script>
+</body>
+</html>
