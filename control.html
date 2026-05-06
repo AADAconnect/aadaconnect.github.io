@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AADA - Device Control</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --radius-xl: 32px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* ── Light Theme ── */
+    [data-theme="light"] {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #F0F0F5;
+      --surface-sheet: #FFFFFF;
+      --surface-item: #F8F8FC;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(0,0,0,0.28);
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.1);
+      --accent: #000000;
+      --accent-light: #E5E5EA;
+      --active-light: #FF9500;
+      --active-blue: #0A84FF;
+      --active-grad: linear-gradient(135deg, #FF9F0A 0%, #FF7A00 100%);
+      --online: #34C759;
+      --online-dim: rgba(52,199,89,0.12);
+      --offline: rgba(0,0,0,0.2);
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.1);
+      --nav-bg: rgba(255,255,255,0.85);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-md: 0 12px 32px rgba(0,0,0,0.08);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.16);
+      --shadow-active: 0 12px 28px rgba(255,149,0,0.2);
+      --header-fade: linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0) 100%);
+      --neutral-primary: #64748b;
+      --neutral-secondary: #94a3b8;
+      --neutral-glow: rgba(100,116,139,0.15);
+      --warning-primary: #0891b2;
+      --warning-secondary: #06b6d4;
+      --warning-glow: rgba(8,145,178,0.2);
+      --glass-subtle: rgba(255,255,255,0.5);
+      --glass-medium: rgba(255,255,255,0.7);
+      --border-medium: rgba(0,0,0,0.12);
+      --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      --power-on-color: #34C759;
+      --power-on-dim: rgba(52,199,89,0.15);
+      --power-off-color: #FF3B30;
+      --power-off-dim: rgba(255,59,48,0.12);
+      --power-pending-color: #FF9500;
+      --power-offline-color: #8E8E93;
+    }
+
+    /* ── Dark Theme ── */
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-secondary: #2C2C2E;
+      --surface-sheet: #1C1C1E;
+      --surface-item: #2C2C2E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --accent: #FFFFFF;
+      --accent-light: #3A3A3C;
+      --active-light: #FF9F0A;
+      --active-blue: #0A84FF;
+      --active-grad: linear-gradient(135deg, #FFB340 0%, #FF9F0A 100%);
+      --online: #30D158;
+      --online-dim: rgba(48,209,88,0.12);
+      --offline: rgba(255,255,255,0.2);
+      --danger: #FF453A;
+      --danger-dim: rgba(255,69,58,0.12);
+      --nav-bg: rgba(28,28,30,0.85);
+      --shadow-sm: 0 4px 14px rgba(0,0,0,0.3);
+      --shadow-md: 0 16px 40px rgba(0,0,0,0.5);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+      --shadow-active: 0 12px 28px rgba(255,159,10,0.15);
+      --header-fade: linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 100%);
+      --neutral-primary: #607d8b;
+      --neutral-secondary: #78909c;
+      --neutral-glow: rgba(96,125,139,0.2);
+      --warning-primary: #00bcd4;
+      --warning-secondary: #26c6da;
+      --warning-glow: rgba(0,188,212,0.3);
+      --glass-subtle: rgba(255,255,255,0.02);
+      --glass-medium: rgba(255,255,255,0.05);
+      --border-medium: rgba(255,255,255,0.15);
+      --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      --power-on-color: #30D158;
+      --power-on-dim: rgba(48,209,88,0.15);
+      --power-off-color: #FF453A;
+      --power-off-dim: rgba(255,69,58,0.12);
+      --power-pending-color: #FF9F0A;
+      --power-offline-color: #636366;
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    body {
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+      transition: background 0.3s ease;
+    }
+
+    .phone {
+      width: 100%; max-width: 430px; height: 100vh;
+      display: flex; flex-direction: column; position: relative;
+      background: var(--bg); overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: relative; z-index: 50;
+      padding: calc(env(safe-area-inset-top, 12px) + 12px) 20px 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 100%;
+      height: 20px;
+      background: var(--header-fade);
+      pointer-events: none;
+      z-index: 49;
+      transition: background 0.3s ease;
+    }
+
+    .icon-btn {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--surface-secondary);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-sm); cursor: pointer; border: 1px solid var(--border);
+      transition: var(--transition); color: var(--text-primary); font-size: 17px;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+
+    .back-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px 10px 12px;
+      height: 44px; border-radius: 22px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .back-btn:active { transform: scale(0.95); }
+    .back-btn i { font-size: 14px; }
+
+    .header-right { display: flex; gap: 10px; align-items: center; }
+
+    /* ── Device Info Card ── */
+    .device-card-header {
+      margin: 20px 20px 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .device-meta-row {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+
+    .device-meta-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+
+    .device-icon-wrap {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: var(--text-secondary);
+      flex-shrink: 0; transition: var(--transition);
+    }
+
+    .device-name-wrap { flex: 1; min-width: 0; }
+    .device-label-tag {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-secondary); margin-bottom: 3px;
+    }
+    .device-name-text {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.4px;
+      color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .device-actions-row { display: flex; gap: 8px; }
+
+    .device-action-btn {
+      padding: 8px 14px; border-radius: 20px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      color: var(--text-secondary); font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: var(--transition);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .device-action-btn:active { transform: scale(0.95); }
+    .device-action-btn.primary {
+      background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.3);
+      color: var(--active-blue);
+    }
+
+    /* Connection indicator */
+    .conn-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 14px; border-top: 1px solid var(--border);
+    }
+    .conn-left { display: flex; align-items: center; gap: 8px; }
+    .conn-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--offline); transition: background 0.3s; flex-shrink: 0;
+    }
+    .conn-dot.connected { background: var(--online); box-shadow: 0 0 6px var(--online); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1; transform:scale(1)} 50%{opacity:0.7; transform:scale(1.2)} }
+    .conn-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .conn-subtext { font-size: 11px; color: var(--text-secondary); }
+
+    /* ── Room Badge ── */
+    .room-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 100px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition);
+    }
+    .room-badge:active { transform: scale(0.95); }
+    .room-badge.has-room {
+      background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.25);
+      color: var(--active-blue);
+    }
+    .room-badge i { font-size: 10px; }
+
+    /* ── Scroll content ── */
+    /* ── Scroll content ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* ── Power Button ── */
+    .power-section {
+      padding: 24px 20px calc(80px + env(safe-area-inset-bottom, 0px));
+      display: flex; flex-direction: column; align-items: center; gap: 2rem;
+      flex-shrink: 0;
+    }
+
+    .power-display {
+      position: relative;
+      width: 100%;
+      max-width: 320px;
+      aspect-ratio: 1;
+      background: var(--surface);
+      border: 2px solid var(--border-medium);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      box-shadow: var(--shadow-lg);
+      animation: scaleIn 0.6s var(--transition-bounce) 0.1s both;
+      user-select: none;
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .power-display::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      padding: 2px;
+      background: linear-gradient(135deg, var(--neutral-primary), var(--neutral-secondary));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.6;
+      transition: all var(--transition-smooth);
+    }
+
+    .power-display:active { transform: scale(0.96); }
+
+    .power-display.power-on::before {
+      background: linear-gradient(135deg, #10b981, #34d399);
+      opacity: 1;
+    }
+    .power-display.power-off::before {
+      background: linear-gradient(135deg, #ef4444, #f87171);
+      opacity: 1;
+    }
+    .power-display.power-pending::before {
+      background: linear-gradient(135deg, var(--warning-primary), var(--warning-secondary));
+      opacity: 1;
+    }
+    .power-display.power-offline::before {
+      background: linear-gradient(135deg, #64748b, #94a3b8);
+      opacity: 0.7;
+    }
+
+    .power-ring {
+      position: absolute;
+      inset: -20px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--active-blue);
+      opacity: 0;
+      transition: all var(--transition-smooth);
+    }
+    .power-ring.rotating {
+      opacity: 1;
+      animation: rotate 1.5s linear infinite;
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .power-icon {
+      width: 80px;
+      height: 80px;
+      transition: all var(--transition-smooth);
+      color: var(--neutral-primary);
+      filter: drop-shadow(0 4px 12px var(--neutral-glow));
+    }
+    .power-display.power-on .power-icon {
+      color: #10b981;
+      filter: drop-shadow(0 4px 12px rgba(16,185,129,0.4));
+      transform: scale(1.1);
+    }
+    .power-display.power-off .power-icon {
+      color: #ef4444;
+      filter: drop-shadow(0 4px 12px rgba(239,68,68,0.4));
+    }
+    .power-display.power-pending .power-icon {
+      color: var(--warning-primary);
+      filter: drop-shadow(0 4px 12px var(--warning-glow));
+    }
+    .power-display.power-offline .power-icon {
+      color: #64748b;
+      filter: drop-shadow(0 4px 12px rgba(100,116,139,0.3));
+      opacity: 0.7;
+    }
+
+    .power-status-label {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: all var(--transition-smooth);
+      color: var(--neutral-primary);
+    }
+    .power-display.power-on .power-status-label { color: #10b981; text-shadow: 0 0 20px rgba(16,185,129,0.4); }
+    .power-display.power-off .power-status-label { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.4); }
+    .power-display.power-pending .power-status-label { color: var(--warning-primary); text-shadow: 0 0 20px var(--warning-glow); }
+    .power-display.power-offline .power-status-label { color: #64748b; text-shadow: 0 0 20px rgba(100,116,139,0.3); }
+
+    .power-display.success-animation { animation: successPulse 0.5s ease-out; }
+    @keyframes successPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+    /* ── Status Message Card ── */
+    .status-message {
+      width: 100%;
+      max-width: min(320px, 80vw);
+      text-align: center;
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border-medium);
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+      transition: all var(--transition-smooth);
+      animation: fadeInUp 0.5s ease-out 0.2s both;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .status-message.status-on { color: #10b981; border-color: #10b981; background: linear-gradient(135deg, var(--glass-subtle), rgba(16,185,129,0.2)); }
+    .status-message.status-off { color: #ef4444; border-color: #ef4444; background: linear-gradient(135deg, var(--glass-subtle), rgba(239,68,68,0.2)); }
+    .status-message.status-pending { color: var(--warning-primary); border-color: var(--warning-primary); background: linear-gradient(135deg, var(--glass-subtle), var(--warning-glow)); }
+    .status-message.status-offline { color: #64748b; border-color: #64748b; background: linear-gradient(135deg, var(--glass-subtle), rgba(100,116,139,0.2)); }
+    .status-message.status-checking { color: var(--text-secondary); border-color: var(--border-medium); background: linear-gradient(135deg, var(--glass-subtle), var(--glass-medium)); }
+
+    /* ── Section title ── */
+    .section-title {
+      padding: 20px 20px 12px;
+      font-size: 20px; font-weight: 600; letter-spacing: -0.4px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .section-action { font-size: 14px; color: var(--active-blue); font-weight: 500; cursor: pointer; transition: opacity 0.2s; }
+    .section-action:active { opacity: 0.6; }
+
+    /* ── Info Row ── */
+    .info-row {
+      margin: 0 20px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+      overflow: hidden; box-shadow: var(--shadow-sm);
+    }
+    .info-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+    }
+    .info-item:last-child { border-bottom: none; }
+    .info-item-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: var(--text-secondary); flex-shrink: 0;
+    }
+    .info-item-body { flex: 1; }
+    .info-item-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 2px; }
+    .info-item-value { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .info-item-chevron { color: var(--text-tertiary); font-size: 11px; }
+
+    /* ── Bottom Sheet ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .overlay.show { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      position: fixed; bottom: 0; left: 50%;
+      transform: translateX(-50%) translateY(105%);
+      width: 100%; max-width: 430px;
+      background: var(--surface-sheet);
+      border: 1px solid var(--border); border-bottom: none;
+      border-radius: 24px 24px 0 0; padding: 0 0 40px;
+      z-index: 300; transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+      max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .sheet.show { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle-area { padding: 12px 20px 0; flex-shrink: 0; }
+    .sheet-handle { width: 36px; height: 4px; background: var(--surface-secondary); border-radius: 2px; margin: 0 auto 16px; }
+    .sheet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .sheet-back {
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-secondary); font-size: 12px; flex-shrink: 0; transition: all 0.15s;
+    }
+    .sheet-back:active { transform: scale(0.9); }
+    .sheet-title { font-size: 17px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.2px; }
+    .sheet-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px; flex: 1; }
+    .sheet-scroll::-webkit-scrollbar { display: none; }
+    .sheet-footer { padding: 12px 20px 0; flex-shrink: 0; border-top: 1px solid var(--border); }
+    .sheet-cat {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--text-tertiary); margin: 16px 0 8px;
+    }
+    .sheet-cat:first-child { margin-top: 0; }
+
+    .sheet-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .sheet-item:last-child { margin-bottom: 0; }
+    .sheet-item:active { transform: scale(0.98); background: var(--surface-secondary); }
+    .sheet-item.danger-item .item-title { color: var(--danger); }
+    .sheet-item.danger-item .item-icon { background: var(--danger-dim); border-color: rgba(255,69,58,0.2); color: var(--danger); }
+
+    .item-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 14px; flex-shrink: 0;
+    }
+    .item-icon.blue { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.25); color: var(--active-blue); }
+    .item-icon.green { background: var(--online-dim); border-color: rgba(48,209,88,0.25); color: var(--online); }
+
+    .item-body { flex: 1; min-width: 0; }
+    .item-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .item-sub { font-size: 12px; color: var(--text-secondary); }
+    .item-chevron { color: var(--text-tertiary); font-size: 11px; }
+
+    /* ── Room list inside sheet ── */
+    .room-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .room-option:last-child { margin-bottom: 0; }
+    .room-option:active { transform: scale(0.98); }
+    .room-option.selected {
+      background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.3);
+    }
+    .room-option-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .room-option.selected .room-option-icon { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.3); }
+    .room-option-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .room-option-count { font-size: 12px; color: var(--text-secondary); }
+    .room-option-check { color: var(--active-blue); font-size: 14px; display: none; }
+    .room-option.selected .room-option-check { display: block; }
+
+    /* ── Input fields ── */
+    .sheet-input-wrap { margin-bottom: 12px; }
+    .sheet-input-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 8px; }
+    .sheet-input {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 15px; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .sheet-input:focus { border-color: var(--active-blue); }
+    .sheet-input::placeholder { color: var(--text-tertiary); }
+
+    .sheet-input-emoji-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .emoji-btn {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; transition: all 0.15s;
+    }
+    .emoji-btn:active { transform: scale(0.9); }
+    .emoji-btn.selected { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.4); }
+
+    .sheet-btn {
+      width: 100%; padding: 14px;
+      border-radius: var(--radius-md); border: none;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .sheet-btn.primary { background: var(--active-blue); color: #fff; }
+    .sheet-btn.primary:active { opacity: 0.85; transform: scale(0.98); }
+    .sheet-btn.secondary { background: var(--surface-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+    .sheet-btn.secondary:active { transform: scale(0.98); }
+    .sheet-btn.danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,69,58,0.2); }
+    .sheet-btn.danger:active { transform: scale(0.98); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md); padding: 12px 20px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      box-shadow: var(--shadow-md); z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Empty state */
+    .empty-rooms {
+      text-align: center; padding: 28px 20px;
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+    }
+    .empty-rooms i { font-size: 28px; margin-bottom: 10px; display: block; color: var(--text-tertiary); }
+
+    @media (max-width: 400px) {
+      .power-display { max-width: 240px; }
+      .power-icon { width: 56px; height: 56px; }
+      .power-status-label { font-size: 22px; }
+      .status-message { font-size: 13px; padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="phone">
+  <!-- Header -->
+  <header class="header">
+    <button class="back-btn" id="backButton">
+      <i class="fa-solid fa-chevron-left"></i>
+      Back
+    </button>
+    <div class="header-right">
+      <div class="icon-btn" id="refreshButton" title="Refresh">
+        <i class="fa-solid fa-arrows-rotate"></i>
+      </div>
+      <div class="icon-btn" id="themeButton" title="Toggle Theme">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </div>
+    </div>
+  </header>
+
+  <!-- Scrollable Content -->
+  <div class="content">
+    <!-- Device Info Card -->
+    <div class="device-card-header">
+      <div class="device-meta-row">
+        <div class="device-meta-left">
+          <div class="device-icon-wrap" id="deviceIconWrap">
+            <i class="fa-solid fa-plug"></i>
+          </div>
+          <div class="device-name-wrap">
+            <div class="device-label-tag" id="deviceLabelTag">Smart Device</div>
+            <div class="device-name-text" id="deviceName">Loading...</div>
+          </div>
+        </div>
+      </div>
+      <div class="device-actions-row">
+        <div class="device-action-btn" id="renameBtn">
+          <i class="fa-solid fa-pen"></i>
+          Rename
+        </div>
+        <div class="device-action-btn primary" id="roomBtn">
+          <i class="fa-solid fa-door-open"></i>
+          <span id="roomBtnText">Add to Room</span>
+        </div>
+      </div>
+      <div class="conn-row" style="margin-top: 14px;">
+        <div class="conn-left">
+          <div class="conn-dot" id="mqttDot"></div>
+          <div>
+            <div class="conn-text" id="connectionText">Connecting...</div>
+            <div class="conn-subtext">MQTT Server</div>
+          </div>
+        </div>
+        <div class="room-badge" id="roomBadge" onclick="openRoomSheet()">
+          <i class="fa-solid fa-door-open"></i>
+          <span id="roomBadgeText">No Room</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Power Section -->
+    <div class="power-section">
+      <div class="power-display power-offline" id="powerDisplay">
+        <div class="power-ring" id="powerRing"></div>
+        <svg class="power-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2v10"/>
+          <path d="M18.4 6.6a9 9 0 1 1-12.77.04"/>
+        </svg>
+        <div class="power-status-label" id="powerLabel">CHECKING</div>
+      </div>
+      <div class="status-message status-checking" id="statusMessage">Checking device status...</div>
+    </div>
+
+
+  </div>
+</div>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<!-- Sheet: Rename Device -->
+<div class="sheet" id="renameSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('renameSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Rename Device</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Custom Name</div>
+      <input type="text" class="sheet-input" id="renameInput" placeholder="e.g. Living Room Lamp" maxlength="32">
+    </div>
+    <button class="sheet-btn primary" id="renameSaveBtn" onclick="saveDeviceName()">Save Name</button>
+    <button class="sheet-btn secondary" style="margin-top: 8px;" onclick="closeSheet('renameSheet')">Cancel</button>
+  </div>
+</div>
+
+<!-- Sheet: Room Assignment -->
+<div class="sheet" id="roomSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('roomSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Assign to Room</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-cat">Current Room</div>
+    <div id="roomCurrentInfo" class="room-option selected" style="display:none;">
+      <div class="room-option-icon" id="roomCurrentEmoji">🏠</div>
+      <div class="room-option-name" id="roomCurrentName">—</div>
+      <div class="room-option-count"></div>
+      <i class="fa-solid fa-check room-option-check"></i>
+    </div>
+    <div class="sheet-cat">All Rooms</div>
+    <div id="roomOptionsList"></div>
+    <div style="height: 8px;"></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="sheet-btn primary" onclick="openCreateRoomSheet()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Create New Room
+    </button>
+    <button class="sheet-btn danger" style="margin-top: 8px;" id="removeFromRoomBtn" onclick="removeFromRoom()">
+      <i class="fa-solid fa-door-closed" style="margin-right:6px;"></i> Remove from Room
+    </button>
+  </div>
+</div>
+
+<!-- Sheet: Create Room -->
+<div class="sheet" id="createRoomSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="goBackToRoomSheet()"><i class="fa-solid fa-arrow-left"></i></div>
+      <div class="sheet-title">Create Room</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Room Name</div>
+      <input type="text" class="sheet-input" id="newRoomName" placeholder="e.g. Living Room" maxlength="24">
+    </div>
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Choose Icon</div>
+      <div class="sheet-input-emoji-row" id="emojiPicker">
+        <!-- populated by JS -->
+      </div>
+    </div>
+    <button class="sheet-btn primary" onclick="createRoom()">Create Room</button>
+    <button class="sheet-btn secondary" style="margin-top:8px;" onclick="goBackToRoomSheet()">Cancel</button>
+  </div>
+</div>
+
+<!-- Sheet: Manage Rooms -->
+<div class="sheet" id="manageRoomsSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('manageRoomsSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Manage Rooms</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div id="manageRoomsList"></div>
+    <button class="sheet-btn primary" style="margin-top:16px;" onclick="openCreateRoomFromManage()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Create New Room
+    </button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let mqttClient = null;
+  let deviceId = null;
+  let currentUser = null;
+  let controlTopic = null;
+  let statusTopic = null;
+  let ofTopic = null;
+
+  let currentStatus = 'OFF';
+  let lastKnownStatus = null;
+  let isOnline = false;
+  let pendingCommand = null;
+  let pendingStartTime = null;
+
+  let deviceOnlineStatus = {};
+  let deviceTimeout = null;
+  let onlineCheckTimeout = null;
+  let statusTimeout = null;
+
+  // ── Room & Name Storage ──
+  const ROOMS_KEY = 'aada_rooms';
+  const DEVICE_ROOMS_KEY = 'aada_device_rooms';
+  const DEVICE_NAMES_KEY = 'aada_device_names';
+
+  const ROOM_EMOJIS = ['🏠','🛋️','🛏️','🍳','🚿','💼','🎮','📚','🌿','💡','🔌','🏋️','🎵','🌙','☀️','❄️'];
+  let selectedEmoji = '🏠';
+  let createRoomFromManage = false;
+
+  function getRooms() {
+    try { return JSON.parse(localStorage.getItem(ROOMS_KEY) || '[]'); } catch { return []; }
+  }
+  function saveRooms(rooms) {
+    localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+  }
+  function getDeviceRooms() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_ROOMS_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveDeviceRooms(dr) {
+    localStorage.setItem(DEVICE_ROOMS_KEY, JSON.stringify(dr));
+  }
+  function getDeviceNames() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_NAMES_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveDeviceNames(dn) {
+    localStorage.setItem(DEVICE_NAMES_KEY, JSON.stringify(dn));
+  }
+
+  function getDeviceName() {
+    const names = getDeviceNames();
+    return names[deviceId] || deviceId;
+  }
+  function getDeviceRoom() {
+    const dr = getDeviceRooms();
+    const rooms = getRooms();
+    const roomId = dr[deviceId];
+    if (!roomId) return null;
+    return rooms.find(r => r.id === roomId) || null;
+  }
+  function getDevicesInRoom(roomId) {
+    const dr = getDeviceRooms();
+    return Object.entries(dr).filter(([,rid]) => rid === roomId).map(([did]) => did);
+  }
+
+  // ── Theme (synced with dashboard via localStorage) ──
+  function loadTheme() {
+    const saved = localStorage.getItem('theme') || localStorage.getItem('appTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    localStorage.setItem('theme', saved);
+    localStorage.setItem('appTheme', saved);
+    updateThemeIcon(saved);
+  }
+
+  function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (theme === 'light') {
+      icon.className = 'fa-solid fa-moon';
+    } else {
+      icon.className = 'fa-solid fa-sun';
+    }
+  }
+
+  function performToggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    localStorage.setItem('appTheme', next); // sync with dashboard
+    updateThemeIcon(next);
+  }
+
+  // Watch for theme changes from dashboard (storage event)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme' || e.key === 'appTheme') {
+      const theme = e.newValue || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeIcon(theme);
+    }
+  });
+
+  // ── UI helpers ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function openSheet(id) {
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeSheet(id) {
+    document.getElementById(id).classList.remove('show');
+    // only hide overlay if no sheets open
+    if (!document.querySelector('.sheet.show')) {
+      document.getElementById('overlay').classList.remove('show');
+    }
+  }
+  function closeAllSheets() {
+    document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show'));
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  // ── Rename ──
+  function openRenameSheet() {
+    const input = document.getElementById('renameInput');
+    input.value = getDeviceName() === deviceId ? '' : getDeviceName();
+    openSheet('renameSheet');
+    setTimeout(() => input.focus(), 300);
+  }
+  function saveDeviceName() {
+    const val = document.getElementById('renameInput').value.trim();
+    if (!val) { showToast('Please enter a name'); return; }
+    const names = getDeviceNames();
+    names[deviceId] = val;
+    saveDeviceNames(names);
+    updateDeviceDisplay();
+    closeSheet('renameSheet');
+    showToast('Device renamed');
+  }
+
+  // ── Room Sheet ──
+  function openRoomSheet() {
+    renderRoomOptions();
+    openSheet('roomSheet');
+  }
+
+  function renderRoomOptions() {
+    const rooms = getRooms();
+    const currentRoom = getDeviceRoom();
+    const list = document.getElementById('roomOptionsList');
+    const currentInfo = document.getElementById('roomCurrentInfo');
+    const removeBtn = document.getElementById('removeFromRoomBtn');
+
+    // Current room
+    if (currentRoom) {
+      document.getElementById('roomCurrentEmoji').textContent = currentRoom.emoji || '🏠';
+      document.getElementById('roomCurrentName').textContent = currentRoom.name;
+      currentInfo.style.display = 'flex';
+      removeBtn.style.display = 'block';
+    } else {
+      currentInfo.style.display = 'none';
+      removeBtn.style.display = 'none';
+    }
+
+    if (rooms.length === 0) {
+      list.innerHTML = '<div class="empty-rooms"><i class="fa-solid fa-door-open"></i>No rooms yet.<br>Create one below.</div>';
+      return;
+    }
+
+    list.innerHTML = rooms.map(room => {
+      const count = getDevicesInRoom(room.id).length;
+      const isSelected = currentRoom && currentRoom.id === room.id;
+      return `<div class="room-option ${isSelected ? 'selected' : ''}" onclick="assignToRoom('${room.id}')">
+        <div class="room-option-icon">${room.emoji || '🏠'}</div>
+        <div class="room-option-name">${escapeHtml(room.name)}</div>
+        <div class="room-option-count">${count} device${count!==1?'s':''}</div>
+        <i class="fa-solid fa-check room-option-check"></i>
+      </div>`;
+    }).join('');
+  }
+
+  function assignToRoom(roomId) {
+    const dr = getDeviceRooms();
+    dr[deviceId] = roomId;
+    saveDeviceRooms(dr);
+    updateDeviceDisplay();
+    closeSheet('roomSheet');
+    const room = getRooms().find(r => r.id === roomId);
+    showToast(`Added to ${room ? room.name : 'room'}`);
+  }
+
+  function removeFromRoom() {
+    const dr = getDeviceRooms();
+    delete dr[deviceId];
+    saveDeviceRooms(dr);
+    updateDeviceDisplay();
+    closeSheet('roomSheet');
+    showToast('Removed from room');
+  }
+
+  // ── Create Room ──
+  function openCreateRoomSheet() {
+    createRoomFromManage = false;
+    document.getElementById('newRoomName').value = '';
+    selectedEmoji = '🏠';
+    renderEmojiPicker();
+    closeSheet('roomSheet');
+    openSheet('createRoomSheet');
+    setTimeout(() => document.getElementById('newRoomName').focus(), 300);
+  }
+
+  function openCreateRoomFromManage() {
+    createRoomFromManage = true;
+    document.getElementById('newRoomName').value = '';
+    selectedEmoji = '🏠';
+    renderEmojiPicker();
+    closeSheet('manageRoomsSheet');
+    openSheet('createRoomSheet');
+    setTimeout(() => document.getElementById('newRoomName').focus(), 300);
+  }
+
+  function goBackToRoomSheet() {
+    closeSheet('createRoomSheet');
+    if (createRoomFromManage) {
+      openSheet('manageRoomsSheet');
+      renderManageRooms();
+    } else {
+      openSheet('roomSheet');
+      renderRoomOptions();
+    }
+  }
+
+  function renderEmojiPicker() {
+    const picker = document.getElementById('emojiPicker');
+    picker.innerHTML = ROOM_EMOJIS.map(e =>
+      `<div class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</div>`
+    ).join('');
+  }
+
+  function selectEmoji(e) {
+    selectedEmoji = e;
+    renderEmojiPicker();
+  }
+
+  function createRoom() {
+    const name = document.getElementById('newRoomName').value.trim();
+    if (!name) { showToast('Please enter a room name'); return; }
+    const rooms = getRooms();
+    if (rooms.find(r => r.name.toLowerCase() === name.toLowerCase())) {
+      showToast('Room already exists'); return;
+    }
+    const room = { id: 'room_' + Date.now(), name, emoji: selectedEmoji };
+    rooms.push(room);
+    saveRooms(rooms);
+
+    if (!createRoomFromManage) {
+      // assign device to new room
+      const dr = getDeviceRooms();
+      dr[deviceId] = room.id;
+      saveDeviceRooms(dr);
+    }
+
+    updateDeviceDisplay();
+    closeSheet('createRoomSheet');
+    showToast(`Room "${name}" created`);
+  }
+
+  // ── Manage Rooms ──
+  function openManageRooms() {
+    renderManageRooms();
+    openSheet('manageRoomsSheet');
+  }
+
+  function renderManageRooms() {
+    const rooms = getRooms();
+    const list = document.getElementById('manageRoomsList');
+    if (rooms.length === 0) {
+      list.innerHTML = '<div class="empty-rooms"><i class="fa-solid fa-door-open"></i>No rooms yet.</div>';
+      return;
+    }
+    list.innerHTML = rooms.map(room => {
+      const count = getDevicesInRoom(room.id).length;
+      return `<div class="sheet-item" style="margin-bottom:8px;">
+        <div class="item-icon">${room.emoji || '🏠'}</div>
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(room.name)}</div>
+          <div class="item-sub">${count} device${count!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="icon-btn" style="width:34px;height:34px;font-size:13px;" onclick="editRoomPrompt('${room.id}')"><i class="fa-solid fa-pen"></i></div>
+          <div class="icon-btn" style="width:34px;height:34px;font-size:13px;color:var(--danger);" onclick="deleteRoom('${room.id}')"><i class="fa-solid fa-trash"></i></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function editRoomPrompt(roomId) {
+    const rooms = getRooms();
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+    const name = prompt('Rename room:', room.name);
+    if (!name || !name.trim()) return;
+    room.name = name.trim();
+    saveRooms(rooms);
+    renderManageRooms();
+    updateDeviceDisplay();
+    showToast('Room renamed');
+  }
+
+  function deleteRoom(roomId) {
+    if (!confirm('Delete this room? Devices will be unassigned.')) return;
+    let rooms = getRooms();
+    rooms = rooms.filter(r => r.id !== roomId);
+    saveRooms(rooms);
+    // remove all device assignments for this room
+    const dr = getDeviceRooms();
+    Object.keys(dr).forEach(did => { if (dr[did] === roomId) delete dr[did]; });
+    saveDeviceRooms(dr);
+    renderManageRooms();
+    updateDeviceDisplay();
+    showToast('Room deleted');
+  }
+
+  // ── Update display after room/name changes ──
+  function updateDeviceDisplay() {
+    const name = getDeviceName();
+    const room = getDeviceRoom();
+
+    document.getElementById('deviceName').textContent = name;
+    document.getElementById('deviceLabelTag').textContent = deviceId;
+
+    // Room badge
+    const badge = document.getElementById('roomBadge');
+    const badgeText = document.getElementById('roomBadgeText');
+    if (room) {
+      badge.classList.add('has-room');
+      badgeText.textContent = room.name;
+    } else {
+      badge.classList.remove('has-room');
+      badgeText.textContent = 'No Room';
+    }
+
+    // Room btn text
+    document.getElementById('roomBtnText').textContent = room ? room.name : 'Add to Room';
+  }
+
+  function renderRoomsList() {
+    const rooms = getRooms();
+    const currentRoom = getDeviceRoom();
+    const container = document.getElementById('roomsListContainer');
+    if (rooms.length === 0) {
+      container.innerHTML = `<div class="info-item" onclick="openManageRooms()" style="cursor:pointer;">
+        <div class="info-item-icon" style="color:var(--active-blue);background:rgba(10,132,255,0.1);border-color:rgba(10,132,255,0.25);"><i class="fa-solid fa-plus"></i></div>
+        <div class="info-item-body">
+          <div class="item-title" style="font-size:14px;color:var(--active-blue);">Create a Room</div>
+          <div class="info-item-label" style="text-transform:none;letter-spacing:0;font-weight:500;margin-top:2px;">Group devices by location</div>
+        </div>
+      </div>`;
+      return;
+    }
+    container.innerHTML = rooms.map(room => {
+      const count = getDevicesInRoom(room.id).length;
+      const isThis = currentRoom && currentRoom.id === room.id;
+      return `<div class="info-item" onclick="assignToRoom('${room.id}')" style="cursor:pointer;">
+        <div class="info-item-icon" style="${isThis ? 'background:rgba(10,132,255,0.12);border-color:rgba(10,132,255,0.3);color:var(--active-blue);' : ''}">${room.emoji || '🏠'}</div>
+        <div class="info-item-body">
+          <div class="info-item-label">${isThis ? 'CURRENT ROOM' : 'ROOM'}</div>
+          <div class="info-item-value">${escapeHtml(room.name)}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);font-weight:500;">${count} device${count!==1?'s':''}</div>
+        ${isThis ? '<i class="fa-solid fa-check" style="color:var(--active-blue);font-size:13px;margin-left:8px;"></i>' : '<i class="fa-solid fa-chevron-right info-item-chevron" style="margin-left:8px;"></i>'}
+      </div>`;
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  // ── Haptic ──
+  function shouldHapticController() { return localStorage.getItem('hapticsController') === 'true'; }
+  function shouldHapticAll() { return localStorage.getItem('hapticsAll') === 'true'; }
+  function getHapticIntensity() { const s = localStorage.getItem('hapticsIntensity'); return s ? parseInt(s) : 50; }
+  function hapticFeedback(d) { if ('vibrate' in navigator && d > 0) navigator.vibrate(d); }
+  function withHaptic(fn) {
+    return function(event) {
+      const id = event.currentTarget.id;
+      if (shouldHapticAll() || (shouldHapticController() && id === 'powerDisplay')) hapticFeedback(getHapticIntensity());
+      if (fn) fn(event);
+    };
+  }
+
+  // ── Init ──
+  function init() {
+    loadTheme();
+
+    deviceId = sessionStorage.getItem('active_device');
+    if (!deviceId) { alert('No device selected'); window.location.href = 'dashboard.html'; return; }
+
+    const userStr = sessionStorage.getItem('current_user');
+    if (!userStr) { alert('Not logged in'); window.location.href = 'login.html'; return; }
+
+    try { currentUser = JSON.parse(userStr); }
+    catch { alert('Session error'); window.location.href = 'login.html'; return; }
+
+    controlTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/control`;
+    statusTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/status`;
+    ofTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/OF`;
+
+    updateDeviceDisplay();
+
+    // Load cached status
+    try {
+      const cachedStatus = sessionStorage.getItem('device_status_cache');
+      if (cachedStatus) {
+        const cache = JSON.parse(cachedStatus);
+        if (cache && typeof cache === 'object') {
+          const cacheAge = Date.now() - (cache.timestamp || 0);
+          if (cacheAge < 10000 && cache.status && typeof cache.status === 'string') {
+            const validStatuses = ['ON', 'OFF', 'offline'];
+            const norm = cache.status.toUpperCase();
+            if (validStatuses.includes(norm) || validStatuses.includes(cache.status)) {
+              if (cache.status === 'offline') {
+                lastKnownStatus = null; isOnline = false;
+                deviceOnlineStatus[deviceId] = 'offline'; goOffline();
+              } else if (norm === 'ON' || norm === 'OFF') {
+                currentStatus = norm; lastKnownStatus = norm;
+                isOnline = cache.isOnline === true;
+                deviceOnlineStatus[deviceId] = norm;
+                if (norm === 'ON') applyPowerState('ON');
+                else applyPowerState('OFF');
+              }
+            }
+          }
+        }
+        sessionStorage.removeItem('device_status_cache');
+      }
+    } catch(e) { sessionStorage.removeItem('device_status_cache'); }
+
+    connectMQTT();
+  }
+
+  function applyPowerState(state) {
+    const pd = document.getElementById('powerDisplay');
+    const label = document.getElementById('powerLabel');
+    const msg = document.getElementById('statusMessage');
+    if (state === 'ON') {
+      pd.className = 'power-display power-on';
+      label.textContent = 'ON';
+      msg.textContent = 'Device is ON';
+      msg.className = 'status-message status-on';
+      document.getElementById('deviceIconWrap').style.cssText = 'background:var(--online-dim);border-color:rgba(48,209,88,0.3);color:var(--online);';
+    } else if (state === 'OFF') {
+      pd.className = 'power-display power-off';
+      label.textContent = 'OFF';
+      msg.textContent = 'Device is OFF';
+      msg.className = 'status-message status-off';
+      document.getElementById('deviceIconWrap').style.cssText = '';
+    }
+  }
+
+  // ── MQTT ──
+  function connectMQTT() {
+    try {
+      mqttClient = mqtt.connect('wss://y1dda1f8.ala.asia-southeast1.emqxsl.com:8084/mqtt', {
+        username: 'AADAconnect', password: 'wMhtXcU86UtV-48'
+      });
+      mqttClient.on('connect', () => {
+        updateConnectionStatus(true);
+        mqttClient.subscribe(statusTopic);
+        mqttClient.subscribe(ofTopic, () => { checkDeviceStatus(); });
+      });
+      mqttClient.on('message', (topic, message) => handleMQTTMessage(topic, message));
+      const onErr = () => updateConnectionStatus(false);
+      mqttClient.on('error', onErr);
+      mqttClient.on('close', onErr);
+    } catch(e) { updateConnectionStatus(false); }
+  }
+
+  function updateConnectionStatus(connected) {
+    const dot = document.getElementById('mqttDot');
+    const text = document.getElementById('connectionText');
+    if (connected) {
+      dot.className = 'conn-dot connected';
+      text.textContent = 'Connected';
+    } else {
+      dot.className = 'conn-dot';
+      text.textContent = 'Disconnected';
+    }
+  }
+
+  function handleMQTTMessage(topic, message) {
+    const parts = topic.split('/');
+    const last = parts[parts.length - 1];
+
+    if (last === 'OF') {
+      const raw = message.toString().trim();
+      const lower = raw.toLowerCase();
+      if (lower === 'check_status') return;
+      if (deviceTimeout) { clearTimeout(deviceTimeout); deviceTimeout = null; }
+      if (onlineCheckTimeout) { clearTimeout(onlineCheckTimeout); onlineCheckTimeout = null; }
+      if (lower === 'offline') { deviceOnlineStatus[deviceId] = 'offline'; goOffline(); return; }
+      deviceOnlineStatus[deviceId] = raw; isOnline = true;
+      const msg = document.getElementById('statusMessage');
+      const pd = document.getElementById('powerDisplay');
+      if (!pendingCommand) {
+        if (currentStatus === 'ON') applyPowerState('ON');
+        else if (currentStatus === 'OFF') applyPowerState('OFF');
+        else { msg.textContent = 'Device is online'; msg.className = 'status-message status-pending'; }
+      }
+    }
+
+    if (last === 'status') {
+      const s = message.toString().trim().toUpperCase();
+      handleStatusUpdate(s);
+    }
+  }
+
+  function checkDeviceStatus(manualRefresh = false) {
+    const hadValid = deviceOnlineStatus[deviceId] === 'ON' || deviceOnlineStatus[deviceId] === 'OFF';
+    const alreadyOffline = !manualRefresh && (deviceOnlineStatus[deviceId] === 'offline' || !isOnline);
+    const prev = deviceOnlineStatus[deviceId];
+    deviceOnlineStatus[deviceId] = 'Checking...';
+
+    const msg = document.getElementById('statusMessage');
+    const pd = document.getElementById('powerDisplay');
+    const label = document.getElementById('powerLabel');
+
+    if (!pendingCommand && !hadValid && !alreadyOffline) {
+      msg.textContent = 'Checking device status...';
+      msg.className = 'status-message status-checking';
+      pd.className = 'power-display power-offline';
+      label.textContent = 'CHECKING';
+    }
+
+    mqttClient.publish(ofTopic, 'check_status');
+
+    onlineCheckTimeout = setTimeout(() => {
+      if (deviceOnlineStatus[deviceId] === 'Checking...') {
+        deviceOnlineStatus[deviceId] = 'offline'; goOffline();
+      }
+    }, 5000);
+  }
+
+  function showPendingState(command) {
+    const pd = document.getElementById('powerDisplay');
+    const label = document.getElementById('powerLabel');
+    const msg = document.getElementById('statusMessage');
+    document.getElementById('powerRing').classList.add('rotating');
+    pd.className = 'power-display power-pending';
+    label.textContent = 'PENDING';
+    msg.textContent = `Turning ${command === '1' ? 'ON' : 'OFF'}...`;
+    msg.className = 'status-message status-pending';
+    pendingStartTime = Date.now();
+  }
+
+  function hidePendingState(success = true) {
+    document.getElementById('powerRing').classList.remove('rotating');
+    if (success) {
+      const pd = document.getElementById('powerDisplay');
+      pd.classList.add('success-animation');
+      setTimeout(() => pd.classList.remove('success-animation'), 500);
+    }
+    pendingCommand = null; pendingStartTime = null;
+  }
+
+  function handleStatusUpdate(status) {
+    if (onlineCheckTimeout) { clearTimeout(onlineCheckTimeout); onlineCheckTimeout = null; }
+    if (statusTimeout) { clearTimeout(statusTimeout); statusTimeout = null; }
+
+    const lower = status.toLowerCase();
+    if (lower === 'offline') { goOffline(); return; }
+
+    if (status === 'ON' || status === 'OFF') {
+      isOnline = true;
+      if (deviceOnlineStatus[deviceId] === 'Checking...' || deviceOnlineStatus[deviceId] === 'offline') {
+        deviceOnlineStatus[deviceId] = status;
+      }
+      const wasConfirmed = pendingCommand !== null &&
+        ((pendingCommand === '1' && status === 'ON') || (pendingCommand === '0' && status === 'OFF'));
+      if (wasConfirmed) {
+        hidePendingState(true);
+        if (shouldHapticController() || shouldHapticAll()) hapticFeedback(getHapticIntensity());
+      }
+      currentStatus = status; lastKnownStatus = status;
+      applyPowerState(status);
+    } else { goOffline(); }
+  }
+
+  function goOffline() {
+    isOnline = false; deviceOnlineStatus[deviceId] = 'offline';
+    hidePendingState(false);
+    const pd = document.getElementById('powerDisplay');
+    const label = document.getElementById('powerLabel');
+    const msg = document.getElementById('statusMessage');
+    pd.className = 'power-display power-offline';
+    label.textContent = 'OFFLINE';
+    document.getElementById('deviceIconWrap').style.cssText = '';
+    if (lastKnownStatus === 'ON') { msg.textContent = 'Last known: ON (offline)'; }
+    else if (lastKnownStatus === 'OFF') { msg.textContent = 'Last known: OFF (offline)'; }
+    else { msg.textContent = 'Device is offline'; }
+    msg.className = 'status-message status-offline';
+  }
+
+  function performTogglePower() {
+    if (!mqttClient || !mqttClient.connected) { alert('Not connected to server'); return; }
+    if (!isOnline) { alert('Device is offline'); return; }
+    if (pendingCommand !== null) return;
+    const command = currentStatus === 'ON' ? '0' : '1';
+    pendingCommand = command;
+    showPendingState(command);
+    mqttClient.publish(controlTopic, command);
+    if (statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => { goOffline(); }, 5000);
+  }
+
+  function performRefresh() {
+    if (!mqttClient || !mqttClient.connected) { alert('Not connected to server'); return; }
+    const btn = document.getElementById('refreshButton');
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.transition = 'transform 0.5s ease';
+    setTimeout(() => { btn.style.transform = ''; btn.style.transition = ''; }, 500);
+    checkDeviceStatus(true);
+  }
+
+  function performGoBack() { window.location.href = 'dashboard.html'; }
+
+  // ── Boot ──
+  window.onload = function() {
+    init();
+    renderEmojiPicker();
+
+    document.getElementById('powerDisplay').addEventListener('click', withHaptic(performTogglePower));
+    document.getElementById('backButton').addEventListener('click', withHaptic(performGoBack));
+    document.getElementById('refreshButton').addEventListener('click', withHaptic(performRefresh));
+    document.getElementById('themeButton').addEventListener('click', withHaptic(performToggleTheme));
+    document.getElementById('renameBtn').addEventListener('click', openRenameSheet);
+    document.getElementById('roomBtn').addEventListener('click', openRoomSheet);
+    document.getElementById('manageRoomsBtn').addEventListener('click', openManageRooms);
+  };
+
+  window.onbeforeunload = function() {
+    if (mqttClient && mqttClient.connected) mqttClient.end();
+    if (deviceTimeout) clearTimeout(deviceTimeout);
+    if (onlineCheckTimeout) clearTimeout(onlineCheckTimeout);
+    if (statusTimeout) clearTimeout(statusTimeout);
+  };
+</script>
+</body>
+</html>
