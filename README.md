@@ -97,13 +97,13 @@ aadaconnect.github.io/
 ### Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        USER'S BROWSER                               │
-│                                                                     │
-│  ┌──────────┐    ┌──────────────┐    ┌────────────┐                │
-│  │ index    │───▶│  login.html  │───▶│ dashboard  │                │
-│  │ .html    │    │              │    │   .html     │                │
-│  └──────────┘    │ Hash email + │    │             │◀──────────┐   │
+┌────────────────────────────────────────────────────────────────────┐
+│                        USER'S BROWSER                              │
+│                                                                    │
+│  ┌──────────┐    ┌──────────────┐    ┌─────────────┐               │
+│  │ index    │───▶│  login.html │───▶│ dashboard   │               │
+│  │ .html    │    │              │    │   .html     │               │
+│  └──────────┘    │ Hash email + │    │             │◀─────────┐   │
 │                  │ password     │    │ Device grid │           │   │
 │                  │ Store in     │    │ Rooms view  │           │   │
 │                  │ localStorage │    │ MQTT status │           │   │
@@ -120,21 +120,21 @@ aadaconnect.github.io/
 │                    │ Reads device │  │ Power btn  │            │   │
 │                    │ ID from      │  │ Rename     │            │   │
 │                    │ sessionStore │  │ Room assign│            │   │
-│                    └──────┬───────┘  └─────┬──────┘           │   │
+│                    └──────┬───────┘  └─────┬──────┘            │   │
 │                           │               │                    │   │
 └───────────────────────────┼───────────────┼────────────────────┘   │
-                            │               │  MQTT (WSS)             │
+                            │               │  MQTT (WSS)            │
                             │    ┌──────────▼──────────┐             │
-                            │    │   EMQX Cloud Broker  │             │
-                            │    │  (Asia Southeast 1)  │             │
-                            │    └──────────┬───────────┘             │
-                            │               │  MQTT                   │
-                            │    ┌──────────▼───────────┐             │
-                            └───▶│     ESP32 Device      │             │
-                                 │  (Smart Plug / Switch)│             │
-                                 └───────────────────────┘             │
-                                                                        │
-                         Theme sync via localStorage ──────────────────┘
+                            │    │   EMQX Cloud Broker  │            │
+                            │    │  (Asia Southeast 1)  │            │
+                            │    └──────────┬───────────┘            │
+                            │               │  MQTT                  │
+                            │     ┌──────────▼───────────┐           │
+                            └───▶│     ESP32 Device      │           │
+                                 │ (Smart Plug / Switch) │           │
+                                 └───────────────────────┘           │
+                                                                     │
+                         Theme sync via localStorage ────────────────┘
 ```
 
 ---
