@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AADAconnect | WiFi Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+    /* ── Dashboard Design Tokens ── */
+    :root {
+      --radius-xl: 32px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    [data-theme="light"] {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #F0F0F5;
+      --surface-sheet: #FFFFFF;
+      --surface-item: #F8F8FC;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(0,0,0,0.28);
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.1);
+      --active-light: #FF9500;
+      --active-blue: #0A84FF;
+      --online: #34C759;
+      --online-dim: rgba(52,199,89,0.12);
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.1);
+      --nav-bg: rgba(255,255,255,0.85);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-md: 0 12px 32px rgba(0,0,0,0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-secondary: #2C2C2E;
+      --surface-sheet: #1C1C1E;
+      --surface-item: #2C2C2E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --active-light: #FF9F0A;
+      --active-blue: #0A84FF;
+      --online: #30D158;
+      --online-dim: rgba(48,209,88,0.12);
+      --danger: #FF453A;
+      --danger-dim: rgba(255,69,58,0.12);
+      --nav-bg: rgba(28,28,30,0.85);
+      --shadow-sm: 0 4px 14px rgba(0,0,0,0.3);
+      --shadow-md: 0 16px 40px rgba(0,0,0,0.5);
+    }
+
+    html, body { font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    body {
+      background: var(--bg);
+      transition: background 0.3s ease;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    /* ── App Shell ── */
+    .app {
+      width: 100%; max-width: 430px;
+      min-height: 100vh;
+      padding: 0 0 160px;
+      margin: 0 auto;
+      position: relative;
+      background: var(--bg);
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 32px 24px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .header-left {}
+    .sub-greeting {
+      font-size: 13px; color: var(--text-secondary);
+      font-weight: 600; margin-bottom: 6px;
+    }
+    .page-title {
+      font-size: 34px; font-weight: 700;
+      letter-spacing: -0.8px; line-height: 1.1;
+      color: var(--text-primary);
+    }
+
+    /* Back button */
+    .back-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: var(--transition); color: var(--text-secondary);
+      font-size: 18px; flex-shrink: 0; align-self: flex-start; margin-top: 8px;
+    }
+    .back-btn:active { transform: scale(0.92); }
+
+    /* ── Section Label ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 2px; color: var(--text-secondary);
+      padding: 0 24px; margin: 24px 0 12px;
+    }
+
+    /* ── Device Tile ── */
+    .content { padding: 0 24px; }
+
+    .device-tile {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 18px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; box-shadow: var(--shadow-sm);
+    }
+    .device-tile-left { display: flex; align-items: center; gap: 14px; }
+    .device-tile-icon {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: var(--online-dim);
+      border: 1px solid rgba(48,209,88,0.25);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--online); font-size: 1.1rem; flex-shrink: 0;
+    }
+    [data-theme="light"] .device-tile-icon {
+      background: rgba(52,199,89,0.12);
+      border-color: rgba(52,199,89,0.25);
+    }
+    .device-tile-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--text-secondary); margin-bottom: 4px;
+    }
+    .device-tile-code {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary); letter-spacing: 0.5px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Info Card ── */
+    .info-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .info-card-title {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+    }
+    .info-card-title i { color: var(--active-blue); font-size: 14px; }
+
+    .steps { display: flex; flex-direction: column; gap: 14px; }
+    .step { display: flex; align-items: flex-start; gap: 12px; }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--surface-secondary); border: 1px solid var(--border-strong);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--text-secondary);
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .step-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .step-text strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ── Form Card ── */
+    .form-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group:last-of-type { margin-bottom: 0; }
+
+    .field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-secondary); margin-bottom: 8px; padding-left: 2px;
+    }
+
+    .input-wrapper { position: relative; }
+
+    .input-icon {
+      position: absolute; left: 16px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      stroke: var(--text-secondary); pointer-events: none;
+    }
+
+    .password-toggle {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      stroke: var(--text-secondary); cursor: pointer;
+      z-index: 10; transition: opacity 0.15s;
+    }
+    .password-toggle:active { opacity: 0.6; }
+
+    input {
+      width: 100%; padding: 14px 16px 14px 44px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 14px; font-family: 'Inter', sans-serif; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input.has-toggle { padding-right: 44px; }
+    input:focus {
+      border-color: var(--active-blue);
+      box-shadow: 0 0 0 3px rgba(10,132,255,0.15);
+    }
+    input::placeholder { color: var(--text-secondary); }
+
+    .form-divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+    .btn-primary {
+      flex: 2; padding: 15px;
+      background: var(--active-light); border: none;
+      border-radius: var(--radius-md); color: #fff;
+      font-weight: 700; font-size: 14px; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: var(--transition);
+      box-shadow: 0 6px 20px rgba(255,149,0,0.3);
+    }
+    .btn-primary:active { transform: scale(0.97); opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-secondary {
+      flex: 1; padding: 15px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text-secondary);
+      font-weight: 600; font-size: 14px; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: var(--transition);
+    }
+    .btn-secondary:active { transform: scale(0.97); }
+
+    /* ── Status Message ── */
+    .status-msg {
+      margin-top: 14px; padding: 13px 16px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 500;
+      display: none; line-height: 1.5;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    .status-msg.info    { display:block; background:rgba(10,132,255,0.1); border:1px solid rgba(10,132,255,0.25); color:var(--active-blue); }
+    .status-msg.success { display:block; background:var(--online-dim); border:1px solid rgba(48,209,88,0.3); color:var(--online); }
+    .status-msg.error   { display:block; background:var(--danger-dim); border:1px solid rgba(255,69,58,0.25); color:var(--danger); }
+
+    /* ── Nav Dock ── */
+    .bottom-nav-wrap {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 430px;
+      padding: 12px 20px 28px;
+      background: linear-gradient(to top, var(--bg) 60%, transparent);
+      z-index: 100;
+      pointer-events: none;
+    }
+    .bottom-nav {
+      display: flex; justify-content: space-around; align-items: center;
+      background: var(--nav-bg); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--border); border-radius: var(--radius-xl);
+      padding: 0 8px; height: 72px;
+      box-shadow: var(--shadow-md);
+      pointer-events: all;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      color: var(--text-secondary); font-size: 10px; font-weight: 600; cursor: pointer;
+      padding: 4px 2px; transition: var(--transition); flex: 1; opacity: 0.35;
+      pointer-events: none;
+    }
+    .nav-item.clickable { opacity: 1; pointer-events: auto; }
+    .nav-item.active { color: var(--text-primary); opacity: 1; }
+    .nav-icon {
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition); padding: 6px 14px; border-radius: 100px;
+      background: transparent;
+    }
+    .nav-icon svg { width: 20px; height: 20px; fill: currentColor; transition: var(--transition); }
+    .nav-item.active .nav-icon {
+      background: var(--text-primary); color: var(--bg);
+      transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .nav-item.active.clickable { pointer-events: auto; }
+    [data-theme="dark"] .nav-item.active .nav-icon { box-shadow: 0 6px 16px rgba(255,255,255,0.15); }
+
+    .nav-add .nav-icon {
+      background: var(--active-light) !important; color: #fff;
+      transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255,149,0,0.4);
+      opacity: 0.35;
+    }
+
+    /* ── Custom Confirm Dialog ── */
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      display: flex; align-items: flex-end; justify-content: center;
+      padding: 0 16px 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .confirm-overlay.visible { opacity: 1; pointer-events: all; }
+    .confirm-box {
+      width: 100%; max-width: 400px;
+      background: var(--surface-sheet);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px 20px 20px;
+      box-shadow: var(--shadow-md);
+      transform: translateY(24px);
+      transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .confirm-overlay.visible .confirm-box { transform: translateY(0); }
+    .confirm-icon {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: var(--danger-dim); border: 1px solid rgba(255,69,58,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--danger); font-size: 1.1rem; margin: 0 auto 16px;
+    }
+    .confirm-title {
+      font-size: 17px; font-weight: 700; color: var(--text-primary);
+      text-align: center; margin-bottom: 8px;
+    }
+    .confirm-body {
+      font-size: 13px; color: var(--text-secondary); font-weight: 500;
+      text-align: center; line-height: 1.6; margin-bottom: 24px;
+    }
+    .confirm-actions { display: flex; gap: 10px; }
+    .confirm-cancel {
+      flex: 1; padding: 14px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-weight: 600; font-size: 14px; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: var(--transition);
+    }
+    .confirm-cancel:active { transform: scale(0.97); }
+    .confirm-ok {
+      flex: 1.4; padding: 14px;
+      background: var(--danger); border: none;
+      border-radius: var(--radius-md); color: #fff;
+      font-weight: 700; font-size: 14px; font-family: 'Inter', sans-serif;
+      cursor: pointer; transition: var(--transition);
+    }
+    .confirm-ok:active { transform: scale(0.97); opacity: 0.9; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="sub-greeting">AADAconnect</div>
+      <div class="page-title">WiFi<br><strong>Setup</strong></div>
+    </div>
+    <div class="back-btn" onclick="goBack()">
+      <i class="fa-solid fa-chevron-left"></i>
+    </div>
+  </div>
+
+  <!-- Device Code -->
+  <div class="section-label">Your Device</div>
+  <div class="content">
+    <div class="device-tile">
+      <div class="device-tile-left">
+        <div class="device-tile-icon">
+          <i class="fa-solid fa-plug-circle-bolt"></i>
+        </div>
+        <div>
+          <div class="device-tile-label">Device ID</div>
+          <div class="device-tile-code" id="deviceCode">Loading…</div>
+        </div>
+      </div>
+      <i class="fa-solid fa-circle-check" style="color:var(--online);font-size:1.1rem;opacity:0.8;"></i>
+    </div>
+  </div>
+
+  <!-- Instructions -->
+  <div class="section-label">Setup Instructions</div>
+  <div class="content">
+    <div class="info-card">
+      <div class="info-card-title">
+        <i class="fa-solid fa-circle-info"></i>
+        Follow these steps
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">Connect your phone to the WiFi network: <strong>AADA-Plug</strong></div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">Enter your home WiFi credentials in the form below</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">Tap <strong>Configure Device</strong> to send settings to the plug</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">Wait for the device to connect — it will appear in your dashboard</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WiFi Credentials Form -->
+  <div class="section-label">WiFi Credentials</div>
+  <div class="content">
+    <div class="form-card">
+      <form id="wifiForm" onsubmit="sendCredentials(event)">
+        <div class="form-group">
+          <label class="field-label" for="ssid">Network Name (SSID)</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0"/>
+              <path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/>
+              <line x1="12" y1="20" x2="12.01" y2="20"/>
+            </svg>
+            <input type="text" id="ssid" placeholder="Your WiFi network name" autocomplete="off" required>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group">
+          <label class="field-label" for="wifiPassword">WiFi Password</label>
+          <div class="input-wrapper">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input type="password" id="wifiPassword" class="has-toggle" placeholder="Your WiFi password" autocomplete="off" required>
+            <svg class="password-toggle" id="togglePassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn-secondary" onclick="goBack()">Cancel</button>
+          <button type="submit" class="btn-primary" id="submitBtn">
+            <i class="fa-solid fa-paper-plane" style="margin-right:6px;font-size:0.8rem;"></i>Configure Device
+          </button>
+        </div>
+      </form>
+
+      <div class="status-msg" id="statusMessage"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Custom Confirm Dialog -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    <div class="confirm-title" id="confirmTitle">Return to Dashboard?</div>
+    <div class="confirm-body" id="confirmBody">Device setup will be cancelled and your progress will be lost.</div>
+    <div class="confirm-actions">
+      <button class="confirm-cancel" onclick="closeConfirm()">Stay</button>
+      <button class="confirm-ok" id="confirmOkBtn">Leave</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav-wrap">
+<nav class="bottom-nav">
+  <div class="nav-item active clickable" onclick="goHome()">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    </div>
+    <span>Home</span>
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    </div>
+    <span>Search</span>
+  </div>
+  <div class="nav-item nav-add">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+    </div>
+    <span>Add</span>
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon">
+      <i class="fa-solid fa-door-open" style="font-size:20px;"></i>
+    </div>
+    <span>Rooms</span>
+  </div>
+  <div class="nav-item">
+    <div class="nav-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+    </div>
+    <span>More</span>
+  </div>
+</nav>
+</div>
+
+<script>
+  let provisioningData = null;
+
+  function initTheme() {
+    const saved = localStorage.getItem('appTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+
+  document.getElementById('togglePassword').addEventListener('click', function() {
+    const input = document.getElementById('wifiPassword');
+    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+    input.setAttribute('type', type);
+    this.innerHTML = type === 'text'
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  function init() {
+    initTheme();
+    const provStr = sessionStorage.getItem('provisioning');
+    if (!provStr) {
+      alert('No device to configure');
+      window.location.href = 'dashboard.html';
+      return;
+    }
+    provisioningData = JSON.parse(provStr);
+    document.getElementById('deviceCode').textContent = provisioningData.device_id;
+  }
+
+  function sendCredentials(event) {
+    event.preventDefault();
+    const ssid = document.getElementById('ssid').value.trim();
+    const wifiPassword = document.getElementById('wifiPassword').value;
+    const submitBtn = document.getElementById('submitBtn');
+    if (!ssid || !wifiPassword) { showStatus('Please fill in all fields', 'error'); return; }
+    const payload = {
+      ssid, pass: wifiPassword,
+      hashed_email: provisioningData.hashed_email,
+      hashed_password: provisioningData.hashed_password,
+      device_id: provisioningData.device_id
+    };
+    submitBtn.disabled = true;
+    showStatus('Sending configuration to device…', 'info');
+    fetch('http://192.168.4.1/prov', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (response.ok) return response.text();
+      throw new Error('Failed to configure device');
+    })
+    .then(() => {
+      showStatus('Device configured! Connecting to your network…', 'success');
+      sessionStorage.removeItem('provisioning');
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 2500);
+    })
+    .catch(() => {
+      showStatus('Could not reach device. Make sure you are connected to AADA-Plug WiFi.', 'error');
+      submitBtn.disabled = false;
+    });
+  }
+
+  function showStatus(message, type) {
+    const el = document.getElementById('statusMessage');
+    el.textContent = message;
+    el.className = 'status-msg ' + type;
+  }
+
+  let confirmCallback = null;
+
+  function showConfirm(title, body, onOk) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    confirmCallback = onOk;
+    const overlay = document.getElementById('confirmOverlay');
+    overlay.classList.add('visible');
+    document.getElementById('confirmOkBtn').onclick = function() {
+      const cb = confirmCallback;
+      closeConfirm();
+      if(cb) cb();
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('visible');
+    confirmCallback = null;
+  }
+
+  // Tap backdrop to cancel
+  document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+    if(e.target === this) closeConfirm();
+  });
+
+  function goHome() {
+    showConfirm(
+      'Return to Dashboard?',
+      'Device setup will be cancelled and your progress will be lost.',
+      function() {
+        sessionStorage.removeItem('provisioning');
+        window.location.href = 'dashboard.html';
+      }
+    );
+  }
+
+  function goBack() {
+    showConfirm(
+      'Cancel Setup?',
+      'Are you sure? Device setup will be cancelled.',
+      function() {
+        sessionStorage.removeItem('provisioning');
+        window.location.href = 'dashboard.html';
+      }
+    );
+  }
+
+  window.onload = init;
+</script>
+</body>
+</html>
