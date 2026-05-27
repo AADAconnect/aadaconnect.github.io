@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="description" content="AADAconnect — Intelligent smart home control. Monitor, automate, and manage every device from a single dashboard.">
+  <title>AADAconnect — Smart Home Control</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box; margin: 0; padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg:              #080808;
+      --surface:         #111112;
+      --surface-raised:  #191919;
+      --surface-high:    #222224;
+      --border:          rgba(255,255,255,0.07);
+      --border-mid:      rgba(255,255,255,0.11);
+      --border-strong:   rgba(255,255,255,0.18);
+      --text-primary:    #F0F0F0;
+      --text-secondary:  #8A8A8F;
+      --text-tertiary:   rgba(255,255,255,0.25);
+      --amber:           #E8843A;
+      --amber-dim:       rgba(232,132,58,0.12);
+      --amber-subtle:    rgba(232,132,58,0.06);
+      --blue:            #0A84FF;
+      --blue-dim:        rgba(10,132,255,0.12);
+      --green:           #30D158;
+      --green-dim:       rgba(48,209,88,0.12);
+      --font-display:    'DM Serif Display', Georgia, serif;
+      --font-body:       'DM Sans', system-ui, sans-serif;
+      --font-mono:       'DM Mono', 'Courier New', monospace;
+      --ease-out:        cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ═══════════════════════════════════════
+       LIGHT THEME OVERRIDES
+    ═══════════════════════════════════════ */
+    [data-theme="light"] {
+      --bg:              #F2F2F7;
+      --surface:         #FFFFFF;
+      --surface-raised:  #F0F0F5;
+      --surface-high:    #E5E5EA;
+      --border:          rgba(0,0,0,0.07);
+      --border-mid:      rgba(0,0,0,0.11);
+      --border-strong:   rgba(0,0,0,0.18);
+      --text-primary:    #111111;
+      --text-secondary:  #6C6C72;
+      --text-tertiary:   rgba(0,0,0,0.28);
+      --green:           #28A745;
+      --green-dim:       rgba(40,167,69,0.12);
+    }
+    [data-theme="light"] body::before { opacity: 0.015; }
+    [data-theme="light"] .grid-bg {
+      background-image:
+        linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    }
+    [data-theme="light"] .amb-1 {
+      background: radial-gradient(ellipse, rgba(232,132,58,0.10) 0%, transparent 70%);
+    }
+    [data-theme="light"] .amb-2 {
+      background: radial-gradient(ellipse, rgba(10,132,255,0.07) 0%, transparent 70%);
+    }
+    [data-theme="light"] .amb-3 {
+      background: radial-gradient(ellipse, rgba(40,167,69,0.06) 0%, transparent 70%);
+    }
+    [data-theme="light"] nav.scrolled {
+      background: rgba(242,242,247,0.88);
+    }
+    [data-theme="light"] .btn-ghost {
+      color: var(--text-secondary);
+      border-color: var(--border-mid);
+    }
+    [data-theme="light"] .btn-ghost:hover {
+      background: rgba(0,0,0,0.04);
+    }
+    [data-theme="light"] .hero-preview {
+      box-shadow: 0 40px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+    }
+    [data-theme="light"] .p-device,
+    [data-theme="light"] .p-card,
+    [data-theme="light"] .p-chart-row,
+    [data-theme="light"] .p-log-row {
+      background: #FFFFFF;
+      border-color: rgba(0,0,0,0.07);
+    }
+    [data-theme="light"] .p-bar { background: #E5E5EA; }
+
+    /* Theme transition */
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition:
+        background-color 0.4s cubic-bezier(0.4,0,0.2,1),
+        color 0.4s cubic-bezier(0.4,0,0.2,1),
+        border-color 0.4s cubic-bezier(0.4,0,0.2,1),
+        box-shadow 0.4s cubic-bezier(0.4,0,0.2,1) !important;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════
+       NOISE TEXTURE OVERLAY
+    ═══════════════════════════════════════ */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════
+       TOPOGRAPHIC GRID BG
+    ═══════════════════════════════════════ */
+    .grid-bg {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 0%, black 0%, transparent 100%);
+    }
+
+    /* ═══════════════════════════════════════
+       AMBIENT LIGHT BLOBS
+    ═══════════════════════════════════════ */
+    .ambient {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .amb-1, .amb-2, .amb-3 {
+      position: absolute; border-radius: 50%; filter: blur(100px);
+    }
+    .amb-1 {
+      width: 600px; height: 400px;
+      top: -180px; left: 50%; transform: translateX(-50%);
+      background: radial-gradient(ellipse, rgba(232,132,58,0.08) 0%, transparent 70%);
+    }
+    .amb-2 {
+      width: 400px; height: 300px;
+      bottom: 20%; right: -100px;
+      background: radial-gradient(ellipse, rgba(10,132,255,0.06) 0%, transparent 70%);
+    }
+    .amb-3 {
+      width: 350px; height: 250px;
+      top: 40%; left: -80px;
+      background: radial-gradient(ellipse, rgba(48,209,88,0.05) 0%, transparent 70%);
+    }
+
+    /* ═══════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════ */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 0 40px;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid transparent;
+      transition: all 0.4s var(--ease-out);
+    }
+    nav.scrolled {
+      background: rgba(8,8,8,0.82);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      border-bottom-color: var(--border);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo-mark {
+      width: 32px; height: 32px;
+      background: var(--amber);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .nav-logo-mark svg { width: 16px; height: 16px; }
+    .nav-logo-text {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 15px;
+      letter-spacing: -0.3px;
+      color: var(--text-primary);
+    }
+    .nav-logo-text span { color: var(--amber); }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 13.5px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); }
+
+    .nav-cta {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .btn-ghost {
+      padding: 8px 18px;
+      font-size: 13.5px; font-weight: 500;
+      font-family: var(--font-body);
+      color: var(--text-secondary);
+      background: transparent;
+      border: 1px solid var(--border-mid);
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover {
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.04);
+    }
+    .btn-primary {
+      padding: 8px 18px;
+      font-size: 13.5px; font-weight: 500;
+      font-family: var(--font-body);
+      color: #000;
+      background: var(--amber);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: -0.1px;
+    }
+    .btn-primary:hover {
+      background: #F09650;
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ═══════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════ */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 9px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      margin-bottom: 36px;
+      opacity: 0;
+      animation: fadeUp 0.8s var(--ease-out) 0.1s forwards;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      white-space: nowrap;
+    }
+    [data-theme="light"] .hero-badge {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.07);
+    }
+    .hero-badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%; flex-shrink: 0;
+      background: #30D158;
+    }
+    [data-theme="light"] .hero-badge-dot { background: #28A745; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+    .hero-badge-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.1px;
+      font-family: var(--font-body);
+    }
+    .hero-badge-status {
+      font-size: 11px; font-weight: 700;
+      color: #30D158;
+      margin-left: 6px;
+      font-family: var(--font-body);
+    }
+    [data-theme="light"] .hero-badge-status { color: #28A745; }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(48px, 8vw, 88px);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      max-width: 820px;
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--ease-out) 0.2s forwards;
+    }
+    .hero-headline em {
+      font-style: italic;
+      color: var(--amber);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      font-weight: 300;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 520px;
+      margin-bottom: 52px;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--ease-out) 0.35s forwards;
+    }
+
+    .hero-actions {
+      display: flex; align-items: center; gap: 14px;
+      flex-wrap: wrap; justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.9s var(--ease-out) 0.5s forwards;
+    }
+    .btn-hero {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px;
+      font-size: 15px; font-weight: 500;
+      font-family: var(--font-body);
+      text-decoration: none;
+      border-radius: 10px;
+      transition: all 0.25s var(--ease-out);
+      letter-spacing: -0.1px;
+    }
+    .btn-hero-primary {
+      background: var(--amber);
+      color: #000;
+      border: none;
+    }
+    .btn-hero-primary:hover {
+      background: #F09650;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(232,132,58,0.22);
+    }
+    .btn-hero-secondary {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-mid);
+    }
+    .btn-hero-secondary:hover {
+      color: var(--text-primary);
+      border-color: var(--border-strong);
+      background: rgba(255,255,255,0.04);
+      transform: translateY(-2px);
+    }
+    .btn-hero svg { width: 16px; height: 16px; }
+
+    /* ═══════════════════════════════════════
+       HERO DASHBOARD PREVIEW
+    ═══════════════════════════════════════ */
+    .hero-preview-wrap {
+      position: relative;
+      width: 100%; max-width: 900px;
+      margin: 72px auto 0;
+      opacity: 0;
+      animation: fadeUp 1s var(--ease-out) 0.65s forwards;
+    }
+    .hero-preview-wrap::before {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 40%;
+      background: linear-gradient(to top, var(--bg), transparent);
+      z-index: 2; pointer-events: none;
+    }
+    .hero-preview {
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .preview-titlebar {
+      height: 44px;
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      padding: 0 18px; gap: 7px;
+    }
+    .tbar-dot {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+    .tbar-dot:nth-child(1) { background: #FF5F57; }
+    .tbar-dot:nth-child(2) { background: #FFBD2E; }
+    .tbar-dot:nth-child(3) { background: #27C93F; }
+    .tbar-title {
+      margin-left: 10px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+    .tbar-status {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: var(--green); font-family: var(--font-mono);
+    }
+    .tbar-status::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      animation: pulse 2s ease infinite;
+    }
+
+    .preview-body {
+      padding: 20px;
+    }
+
+    .p-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .p-card-sm { padding: 12px 14px; }
+    .p-card-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 8px;
+      font-family: var(--font-mono);
+    }
+    .p-card-value {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+    .p-card-value.amber { color: var(--amber); }
+    .p-card-value.green { color: var(--green); }
+    .p-card-sub {
+      font-size: 10.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .p-device-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .p-device {
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .p-device.active {
+      background: var(--amber-dim);
+      border-color: rgba(232,132,58,0.25);
+    }
+    .p-device-icon {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      font-size: 13px;
+    }
+    .p-device.active .p-device-icon {
+      background: rgba(232,132,58,0.18);
+    }
+    .p-device-name {
+      font-size: 11.5px; font-weight: 500;
+      color: var(--text-primary);
+    }
+    .p-device-room {
+      font-size: 10px; color: var(--text-secondary);
+    }
+    .p-device-status {
+      font-size: 10px; font-weight: 500; font-family: var(--font-mono);
+      margin-top: auto;
+    }
+    .p-device.active .p-device-status { color: var(--amber); }
+    .p-device:not(.active) .p-device-status { color: var(--text-tertiary); }
+
+    .p-chart-row {
+      grid-column: 1 / 3;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-height: 80px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .p-chart-bars {
+      display: flex; align-items: flex-end; gap: 4px;
+      height: 42px; margin-top: auto;
+    }
+    .p-bar {
+      flex: 1; border-radius: 3px 3px 0 0;
+      background: var(--surface-high);
+      transition: background 0.2s;
+    }
+    .p-bar.lit { background: var(--amber); opacity: 0.7; }
+    .p-bar.peak { background: var(--amber); opacity: 1; }
+
+    .p-log-row {
+      grid-column: 3 / 5;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .p-log-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .p-log-item:last-child { border-bottom: none; }
+    .p-log-dot {
+      width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+    }
+    .p-log-text { color: var(--text-secondary); }
+    .p-log-time { margin-left: auto; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═══════════════════════════════════════
+       STATS STRIP
+    ═══════════════════════════════════════ */
+    .stats-strip {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 36px 40px;
+      display: flex; align-items: stretch; justify-content: center;
+      gap: 0;
+      overflow: hidden;
+    }
+    .stat-item {
+      flex: 1; max-width: 220px;
+      text-align: center;
+      padding: 0 32px;
+      position: relative;
+    }
+    .stat-item + .stat-item::before {
+      content: '';
+      position: absolute; left: 0; top: 20%; bottom: 20%;
+      width: 1px;
+      background: var(--border);
+    }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .stat-num span { color: var(--amber); }
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+
+    /* ═══════════════════════════════════════
+       FEATURES SECTION
+    ═══════════════════════════════════════ */
+    .section {
+      position: relative; z-index: 1;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 120px 40px;
+    }
+
+    .section-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--amber);
+      font-family: var(--font-mono);
+      margin-bottom: 20px;
+    }
+    .section-eyebrow::before {
+      content: '';
+      width: 20px; height: 1px; background: var(--amber);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      max-width: 580px;
+      margin-bottom: 20px;
+    }
+    .section-title em { font-style: italic; color: var(--amber); }
+
+    .section-body {
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--text-secondary);
+      max-width: 480px;
+      line-height: 1.7;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      margin-top: 72px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .feat-card {
+      background: var(--bg);
+      padding: 36px 32px;
+      position: relative;
+      transition: background 0.3s;
+      cursor: default;
+    }
+    .feat-card:hover { background: var(--surface); }
+    .feat-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 32px; right: 32px;
+      height: 1px; background: var(--border);
+    }
+    .feat-icon {
+      width: 44px; height: 44px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border-mid);
+      border-radius: 12px;
+      display: grid; place-items: center;
+      margin-bottom: 24px;
+      transition: all 0.3s;
+    }
+    .feat-card:hover .feat-icon {
+      background: var(--amber-dim);
+      border-color: rgba(232,132,58,0.25);
+    }
+    .feat-icon svg { width: 20px; height: 20px; color: var(--text-secondary); }
+    .feat-card:hover .feat-icon svg { color: var(--amber); }
+    .feat-title {
+      font-size: 16px; font-weight: 600;
+      letter-spacing: -0.2px;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .feat-desc {
+      font-size: 14px; font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ═══════════════════════════════════════
+       HOW IT WORKS
+    ═══════════════════════════════════════ */
+    .how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+      margin-top: 0;
+    }
+    .how-steps { display: flex; flex-direction: column; gap: 0; }
+    .how-step {
+      display: flex; gap: 24px;
+      padding: 32px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: default;
+    }
+    .how-step:last-child { border-bottom: none; }
+    .how-step-num {
+      font-family: var(--font-mono);
+      font-size: 11px; font-weight: 500;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+      padding-top: 3px;
+      flex-shrink: 0;
+      width: 28px;
+    }
+    .how-step-content {}
+    .how-step-title {
+      font-size: 16px; font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .how-step-desc {
+      font-size: 14px; font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .how-visual {
+      position: relative;
+    }
+    .how-visual-card {
+      background: var(--surface);
+      border: 1px solid var(--border-mid);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .how-card-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .how-card-title-text {
+      font-size: 13px; font-weight: 600;
+      color: var(--text-primary);
+    }
+    .how-card-badge {
+      font-size: 10.5px; font-weight: 500;
+      padding: 3px 9px;
+      border-radius: 100px;
+      background: var(--green-dim);
+      color: var(--green);
+      font-family: var(--font-mono);
+    }
+    .how-card-body { padding: 18px 22px; }
+
+    .how-device-list { display: flex; flex-direction: column; gap: 2px; }
+    .how-device-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      transition: background 0.2s;
+    }
+    .how-device-item:hover { background: var(--surface-raised); }
+    .how-device-icon-wrap {
+      width: 34px; height: 34px;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      display: grid; place-items: center;
+      font-size: 15px; flex-shrink: 0;
+    }
+    .how-device-icon-wrap.active {
+      background: var(--amber-dim);
+      border-color: rgba(232,132,58,0.22);
+    }
+    .how-device-info { flex: 1; min-width: 0; }
+    .how-device-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .how-device-room { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+    .how-device-pill {
+      font-size: 10px; font-weight: 600;
+      font-family: var(--font-mono);
+      padding: 3px 9px; border-radius: 100px;
+      letter-spacing: 0.05em;
+    }
+    .how-device-pill.on  { background: var(--amber-dim); color: var(--amber); }
+    .how-device-pill.off { background: rgba(255,255,255,0.05); color: var(--text-tertiary); }
+
+    .how-live-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .live-indicator {
+      display: flex; align-items: center; gap: 5px;
+      color: var(--green);
+      font-family: var(--font-mono); font-size: 10.5px;
+    }
+    .live-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+      animation: pulse 2s ease infinite;
+    }
+    .how-live-row .latency {
+      margin-left: auto;
+      font-family: var(--font-mono); font-size: 10.5px;
+      color: var(--text-tertiary);
+    }
+
+    /* ═══════════════════════════════════════
+       PROTOCOL SECTION
+    ═══════════════════════════════════════ */
+    .protocol-section {
+      position: relative; z-index: 1;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .protocol-inner {
+      max-width: 1120px; margin: 0 auto;
+      padding: 100px 40px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 100px;
+      align-items: center;
+    }
+    .protocol-flow {
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .flow-node {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 14px;
+      position: relative;
+      transition: all 0.25s;
+    }
+    .flow-node:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-raised);
+    }
+    .flow-node-icon {
+      width: 36px; height: 36px;
+      background: var(--surface-raised);
+      border-radius: 9px;
+      display: grid; place-items: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+    .flow-node-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .flow-node-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 1px; }
+    .flow-node-tag {
+      margin-left: auto;
+      font-size: 10px; font-weight: 500;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--amber-subtle);
+      border: 1px solid rgba(232,132,58,0.18);
+      color: var(--amber);
+    }
+    .flow-arrow {
+      display: flex; align-items: center; justify-content: center;
+      padding: 2px 0;
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+    .flow-arrow svg { width: 14px; height: 14px; }
+
+    .arch-stats {
+      display: flex; gap: 0;
+      margin-top: 40px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .arch-stat {
+      flex: 1; text-align: center;
+      padding: 20px 16px;
+      position: relative;
+    }
+    .arch-stat + .arch-stat { border-left: 1px solid var(--border); }
+    .arch-stat-num {
+      font-family: var(--font-display);
+      font-size: 32px; font-weight: 400;
+      color: var(--text-primary);
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .arch-stat-num span {
+      font-family: var(--font-body);
+      font-size: 16px; font-weight: 300;
+      color: var(--amber);
+    }
+    .arch-stat-label {
+      font-size: 11.5px; color: var(--text-secondary);
+      font-weight: 300;
+    }
+    /* ═══════════════════════════════════════
+       CTA SECTION
+    ═══════════════════════════════════════ */
+    .cta-section {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 140px 40px;
+    }
+    .cta-inner {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+    .cta-title {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 6vw, 64px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+    .cta-title em { font-style: italic; color: var(--amber); }
+    .cta-body {
+      font-size: 17px; font-weight: 300;
+      color: var(--text-secondary);
+      line-height: 1.65;
+      margin-bottom: 44px;
+    }
+    .cta-actions {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; flex-wrap: wrap;
+    }
+    .cta-disclaimer {
+      font-size: 12.5px; color: var(--text-tertiary);
+      margin-top: 20px; letter-spacing: 0.01em;
+    }
+
+    /* ═══════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════ */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 40px;
+    }
+    .footer-inner {
+      max-width: 1120px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .footer-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .footer-brand {
+      font-size: 13px; font-weight: 500; color: var(--text-secondary);
+    }
+    .footer-brand strong { color: var(--text-primary); }
+    .footer-right {
+      display: flex; align-items: center; gap: 24px;
+    }
+    .footer-right a {
+      font-size: 12.5px; color: var(--text-tertiary);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-right a:hover { color: var(--text-secondary); }
+    .footer-copy {
+      font-size: 12px; color: var(--text-tertiary);
+      margin-top: 16px;
+      max-width: 1120px; margin-inline: auto;
+      padding-inline: 40px;
+      padding-bottom: 24px;
+    }
+
+    /* ═══════════════════════════════════════
+       SCROLL ANIMATIONS
+    ═══════════════════════════════════════ */
+    .reveal {
+      opacity: 0; transform: translateY(28px);
+      transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    }
+    .reveal.visible {
+      opacity: 1; transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ═══════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════ */
+    @media (max-width: 900px) {
+      nav { padding: 0 16px; gap: 10px; }
+      .nav-links { display: none; }
+      .nav-cta { gap: 8px; }
+      .btn-ghost, .btn-primary { padding: 7px 14px; font-size: 13px; white-space: nowrap; }
+      .section { padding: 80px 20px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .how-grid { grid-template-columns: 1fr; gap: 48px; }
+      .protocol-inner { grid-template-columns: 1fr; gap: 60px; padding: 72px 20px; }
+      .hero { padding: 100px 20px 60px; }
+      .stats-strip { padding: 28px 20px; flex-wrap: wrap; gap: 24px; }
+      .stat-item + .stat-item::before { display: none; }
+      .preview-body { }
+      .p-device-row { grid-template-columns: 1fr 1fr; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      footer { padding: 32px 20px; }
+      .footer-copy { padding-inline: 20px; }
+      .cta-section { padding: 100px 20px; }
+    }
+    @media (max-width: 500px) {
+      .preview-body { grid-template-columns: 1fr 1fr; }
+      .p-device-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  <!-- Theme init: runs before paint to avoid flash -->
+  <script>
+    (function() {
+      var saved = localStorage.getItem('appTheme') || localStorage.getItem('theme');
+      var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+</head>
+<body>
+
+  <div class="ambient">
+    <div class="amb-1"></div>
+    <div class="amb-2"></div>
+    <div class="amb-3"></div>
+  </div>
+  <div class="grid-bg"></div>
+
+  <!-- ─── NAV ─── -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">
+        <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.9"/>
+          <rect x="9" y="2" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.5"/>
+          <rect x="2" y="9" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.5"/>
+          <circle cx="11.5" cy="11.5" r="2.5" fill="#000" fill-opacity="0.9"/>
+        </svg>
+      </div>
+      <span class="nav-logo-text">AADA<span>connect</span></span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <a href="login.html" class="btn-ghost">Sign In</a>
+      <a href="login.html" class="btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- ─── HERO ─── -->
+  <section class="hero">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      <span class="hero-badge-label">MQTT over WSS · ESP32</span>
+      <span class="hero-badge-status">LIVE</span>
+    </div>
+
+    <h1 class="hero-headline">
+      Your home,<br><em>intelligently</em> connected
+    </h1>
+
+    <p class="hero-sub">
+      Monitor, control, and automate every smart device in your home — from a single, unified dashboard built on open protocols.
+    </p>
+
+    <div class="hero-actions">
+      <a href="login.html" class="btn-hero btn-hero-primary">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 8h10M9 4l4 4-4 4"/>
+        </svg>
+        Open Dashboard
+      </a>
+      <a href="#features" class="btn-hero btn-hero-secondary">
+        Explore Features
+      </a>
+    </div>
+
+    <!-- Dashboard preview mockup -->
+    <div class="hero-preview-wrap reveal">
+      <div class="hero-preview">
+        <div class="preview-titlebar">
+          <div class="tbar-dot"></div>
+          <div class="tbar-dot"></div>
+          <div class="tbar-dot"></div>
+          <span class="tbar-title">AADAconnect — Home</span>
+          <div class="tbar-status">Connected</div>
+        </div>
+        <div class="preview-body">
+
+          <div class="p-device-row">
+            <div class="p-device active">
+              <div class="p-device-icon">💡</div>
+              <div>
+                <div class="p-device-name">Desk Lamp</div>
+                <div class="p-device-room">Study</div>
+              </div>
+              <div class="p-device-status">ON</div>
+            </div>
+            <div class="p-device">
+              <div class="p-device-icon">🔌</div>
+              <div>
+                <div class="p-device-name">Charger Hub</div>
+                <div class="p-device-room">Bedroom</div>
+              </div>
+              <div class="p-device-status">OFF</div>
+            </div>
+            <div class="p-device active">
+              <div class="p-device-icon">❄️</div>
+              <div>
+                <div class="p-device-name">AC Plug</div>
+                <div class="p-device-room">Living Room</div>
+              </div>
+              <div class="p-device-status">ON</div>
+            </div>
+            <div class="p-device">
+              <div class="p-device-icon">📡</div>
+              <div>
+                <div class="p-device-name">Router Plug</div>
+                <div class="p-device-room">Hallway</div>
+              </div>
+              <div class="p-device-status">OFF</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STATS STRIP ─── -->
+  <div class="stats-strip reveal">
+    <div class="stat-item">
+      <div class="stat-num">MQTT<span>&nbsp;</span></div>
+      <div class="stat-label">over WebSocket Secure</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">3<span>+</span></div>
+      <div class="stat-label">topic namespaces</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">ESP<span>32</span></div>
+      <div class="stat-label">native firmware support</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">0<span>ms</span></div>
+      <div class="stat-label">setup overhead — static app</div>
+    </div>
+  </div>
+
+  <!-- ─── FEATURES ─── -->
+  <section class="section" id="features">
+    <div class="reveal">
+      <div class="section-eyebrow">What's inside</div>
+      <h2 class="section-title">Built for <em>real</em> smart homes</h2>
+      <p class="section-body">Every feature is designed to give you precise, reliable control with zero cloud dependency and a minimal, purposeful interface.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="feat-title">Real-time MQTT Control</div>
+        <div class="feat-desc">Commands reach your ESP32 devices in milliseconds over a persistent WSS connection — no polling, no delay.</div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="5" rx="1.5"/>
+            <rect x="14" y="12" width="7" height="9" rx="1.5"/>
+            <rect x="3" y="16" width="7" height="5" rx="1.5"/>
+          </svg>
+        </div>
+        <div class="feat-title">Dynamic Room Filtering</div>
+        <div class="feat-desc">Organize devices by room with a slide-up Rooms panel. Drill into any space and manage its plugs independently.</div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          </svg>
+        </div>
+        <div class="feat-title">Dark & Light Themes</div>
+        <div class="feat-desc">Cross-tab synchronized theme preference stored in localStorage. Instant toggle, no flash, consistent across all pages.</div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-1">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="feat-title">Secure Authentication</div>
+        <div class="feat-desc">Broker credentials are never stored in plaintext. Session state is kept in memory with a clean login/logout flow.</div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-2">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12.01" y2="18" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="feat-title">Mobile-First Design</div>
+        <div class="feat-desc">Designed and refined for phone-native interaction — bottom sheets, tap-to-confirm, haptic-ready, no pinch zoom.</div>
+      </div>
+
+      <div class="feat-card reveal reveal-delay-3">
+        <div class="feat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="feat-title">Live Device Status</div>
+        <div class="feat-desc">Online/offline state, last-seen timestamps, and on/off status are reflected live without any manual refresh.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ─── -->
+  <section class="section" id="how-it-works">
+    <div class="how-grid">
+      <div>
+        <div class="reveal">
+          <div class="section-eyebrow">How it works</div>
+          <h2 class="section-title">Simple setup, <em>powerful</em> control</h2>
+        </div>
+        <div class="how-steps">
+          <div class="how-step reveal reveal-delay-1">
+            <div class="how-step-num">01</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Create an account</div>
+              <div class="how-step-desc">Sign up on AADAconnect and log in. Your credentials are used to connect securely to your MQTT broker — no cloud, no middleman.</div>
+            </div>
+          </div>
+          <div class="how-step reveal reveal-delay-2">
+            <div class="how-step-num">02</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Power on your device</div>
+              <div class="how-step-desc">Plug in your AADA device. On first boot it broadcasts its own Wi-Fi hotspot — no flashing or cables needed.</div>
+            </div>
+          </div>
+          <div class="how-step reveal reveal-delay-3">
+            <div class="how-step-num">03</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Tap <code style="font-family:var(--font-mono);font-size:13px;color:var(--amber);background:var(--amber-subtle);padding:1px 6px;border-radius:4px;">+</code> and connect to the device hotspot</div>
+              <div class="how-step-desc">In the dashboard, tap the <code style="font-family:var(--font-mono);font-size:12px;color:var(--amber);background:var(--amber-subtle);padding:1px 5px;border-radius:4px;">+</code> button to add a new device. The Wi-Fi Setup page will open — connect your phone to the plug's hotspot when prompted.</div>
+            </div>
+          </div>
+          <div class="how-step reveal reveal-delay-4">
+            <div class="how-step-num">04</div>
+            <div class="how-step-content">
+              <div class="how-step-title">Share your Wi-Fi credentials</div>
+              <div class="how-step-desc">On the Wi-Fi Setup page, enter your home network name and password. The device saves them, connects to your network, and appears live on your dashboard instantly.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="how-visual reveal">
+        <div class="how-visual-card">
+          <div class="how-card-header">
+            <div class="how-card-title-text">MQTT Broker</div>
+            <div class="how-card-badge">wss:// · live</div>
+          </div>
+          <div class="how-card-body">
+            <div class="how-device-list">
+              <div class="how-device-item">
+                <div class="how-device-icon-wrap active">💡</div>
+                <div class="how-device-info">
+                  <div class="how-device-name">Desk Lamp</div>
+                  <div class="how-device-room">Study</div>
+                </div>
+                <div class="how-device-pill on">ON</div>
+              </div>
+              <div class="how-device-item">
+                <div class="how-device-icon-wrap">🔌</div>
+                <div class="how-device-info">
+                  <div class="how-device-name">Charger Hub</div>
+                  <div class="how-device-room">Bedroom</div>
+                </div>
+                <div class="how-device-pill off">OFF</div>
+              </div>
+              <div class="how-device-item">
+                <div class="how-device-icon-wrap active">❄️</div>
+                <div class="how-device-info">
+                  <div class="how-device-name">AC Plug</div>
+                  <div class="how-device-room">Living Room</div>
+                </div>
+                <div class="how-device-pill on">ON</div>
+              </div>
+            </div>
+            <div class="how-live-row">
+              <div class="live-indicator"><div class="live-dot"></div> 3 devices online</div>
+              <span class="latency">12 ms RTT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── PROTOCOL / ARCHITECTURE ─── -->
+  <div class="protocol-section" id="architecture">
+    <div class="protocol-inner">
+
+      <div class="reveal">
+        <div class="section-eyebrow">Architecture</div>
+        <h2 class="section-title">No cloud. No server. Just your <em>devices.</em></h2>
+        <p class="section-body" style="margin-bottom:0">AADAconnect is a fully static web app. It runs entirely in the browser, connects directly to your MQTT broker over a secure WebSocket, and talks straight to your ESP32 devices — nothing in between.</p>
+
+        <div class="arch-stats">
+          <div class="arch-stat">
+            <div class="arch-stat-num">0</div>
+            <div class="arch-stat-label">Backend servers</div>
+          </div>
+          <div class="arch-stat">
+            <div class="arch-stat-num">0<span>ms</span></div>
+            <div class="arch-stat-label">Setup overhead</div>
+          </div>
+          <div class="arch-stat">
+            <div class="arch-stat-num">100<span>%</span></div>
+            <div class="arch-stat-label">Local control</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="protocol-flow">
+          <div class="flow-node">
+            <div class="flow-node-icon">🌐</div>
+            <div>
+              <div class="flow-node-label">MQTT Broker</div>
+              <div class="flow-node-sub">Mosquitto / HiveMQ / custom</div>
+            </div>
+            <div class="flow-node-tag">WSS</div>
+          </div>
+          <div class="flow-arrow">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2v10M3 8l4 4 4-4"/></svg>
+          </div>
+          <div class="flow-node">
+            <div class="flow-node-icon">📱</div>
+            <div>
+              <div class="flow-node-label">AADAconnect Web App</div>
+              <div class="flow-node-sub">Static HTML · No backend · No cloud</div>
+            </div>
+            <div class="flow-node-tag">Browser</div>
+          </div>
+          <div class="flow-arrow">
+            <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 2v10M3 8l4 4 4-4"/></svg>
+          </div>
+          <div class="flow-node">
+            <div class="flow-node-icon">⚡</div>
+            <div>
+              <div class="flow-node-label">ESP32 Smart Plug</div>
+              <div class="flow-node-sub">Relay control · Wi-Fi · MQTT client</div>
+            </div>
+            <div class="flow-node-tag">Device</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px;">
+          <div style="font-size:11.5px;color:var(--text-secondary);line-height:1.65;">
+            <span style="color:var(--amber);font-family:var(--font-mono);font-size:11px;">✦ Zero dependencies</span><br>
+            All logic runs in-browser. No Node.js, no backend, no database. Host on GitHub Pages or any static server.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ─── CTA ─── -->
+  <section class="cta-section">
+    <div class="cta-inner reveal">
+      <h2 class="cta-title">Ready to take <em>control?</em></h2>
+      <p class="cta-body">Connect to your broker, discover your devices, and start managing your smart home in under a minute.</p>
+      <div class="cta-actions">
+        <a href="login.html" class="btn-hero btn-hero-primary" style="font-size:16px;padding:15px 32px;">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;">
+            <path d="M3 8h10M9 4l4 4-4 4"/>
+          </svg>
+          Open Dashboard
+        </a>
+        <a href="wifi_setup.html" class="btn-hero btn-hero-secondary" style="font-size:16px;padding:15px 32px;">
+          Wi-Fi Setup
+        </a>
+      </div>
+      <p class="cta-disclaimer">No account required · Works with any MQTT broker · Open source</p>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <div class="nav-logo-mark" style="width:26px;height:26px;border-radius:6px;">
+          <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:12px;height:12px;">
+            <rect x="2" y="2" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.9"/>
+            <rect x="9" y="2" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.5"/>
+            <rect x="2" y="9" width="5" height="5" rx="1.5" fill="#000" fill-opacity="0.5"/>
+            <circle cx="11.5" cy="11.5" r="2.5" fill="#000" fill-opacity="0.9"/>
+          </svg>
+        </div>
+        <span class="footer-brand"><strong>AADA</strong>connect · Smart Home Platform</span>
+      </div>
+      <div class="footer-right">
+        <a href="login.html">Dashboard</a>
+        <a href="wifi_setup.html">Device Setup</a>
+        <a href="login.html">Sign In</a>
+      </div>
+    </div>
+    <div class="footer-copy">© 2025 AADAconnect. Built with open protocols for open homes.</div>
+  </footer>
+
+  <script>
+    // ── Nav scroll effect ──
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      nav.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    // ── Scroll reveal ──
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── Smooth scroll for nav links ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    // ── Theme system ──
+    function applyTheme(theme, animate) {
+      const root = document.documentElement;
+      if (animate) {
+        root.classList.add('theme-transitioning');
+        setTimeout(() => root.classList.remove('theme-transitioning'), 420);
+      }
+      root.setAttribute('data-theme', theme);
+      // Save to both keys so all pages stay in sync
+      localStorage.setItem('appTheme', theme);
+      localStorage.setItem('theme', theme);
+    }
+
+    // Watch for OS-level theme changes (user changes device theme)
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    mq.addEventListener('change', (e) => {
+      // Only follow OS if the user hasn't manually overridden via any page
+      // We treat the absence of a saved preference as "follow OS"
+      const hasSaved = localStorage.getItem('appTheme') || localStorage.getItem('theme');
+      if (!hasSaved) {
+        applyTheme(e.matches ? 'light' : 'dark', true);
+      }
+    });
+
+    // Watch for theme changes made on other pages (dashboard / control)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'appTheme' || e.key === 'theme') {
+        const t = e.newValue || 'dark';
+        applyTheme(t, true);
+      }
+    });
+  </script>
+</body>
+</html>
