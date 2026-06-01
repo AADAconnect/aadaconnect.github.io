@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AADAconnect | Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --radius-xl: 32px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    [data-theme="light"] {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #EBEBF0;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --border: rgba(0,0,0,0.07);
+      --border-strong: rgba(0,0,0,0.12);
+      --active-light: #FF9500;
+      --active-blue: #0A84FF;
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.1);
+      --shadow-md: 0 12px 32px rgba(0,0,0,0.1);
+      --card-bg: #FFFFFF;
+      --card-border: rgba(0,0,0,0.08);
+      --node-color: rgba(0,0,0,0.04);
+      --node-border: rgba(0,0,0,0.07);
+      --dot-color: rgba(0,0,0,0.08);
+      --line-color: rgba(0,0,0,0.04);
+      --tag-bg: rgba(0,0,0,0.05);
+      --brand-overlay: rgba(242,242,247,0.55);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0A0A0A;
+      --surface: #1C1C1E;
+      --surface-secondary: #2C2C2E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --active-light: #FF9F0A;
+      --active-blue: #0A84FF;
+      --danger: #FF453A;
+      --danger-dim: rgba(255,69,58,0.12);
+      --shadow-md: 0 16px 40px rgba(0,0,0,0.6);
+      --card-bg: #111112;
+      --card-border: rgba(255,255,255,0.09);
+      --node-color: rgba(255,255,255,0.025);
+      --node-border: rgba(255,255,255,0.07);
+      --dot-color: rgba(255,255,255,0.07);
+      --line-color: rgba(255,255,255,0.035);
+      --tag-bg: rgba(255,255,255,0.05);
+      --brand-overlay: rgba(0,0,0,0.45);
+    }
+
+    html, body { height: 100%; font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    body {
+      background: var(--bg);
+      display: flex; justify-content: center;
+      min-height: 100vh; overflow-x: hidden;
+      transition: background 0.3s ease;
+    }
+
+    .login-container {
+      position: relative; width: 100%; max-width: 430px;
+      min-height: 100vh;
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+
+    .hero {
+      position: fixed; inset: 0;
+      z-index: 0; pointer-events: none;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, var(--dot-color) 1px, transparent 1px);
+      background-size: 26px 26px;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 51px,
+        var(--line-color) 51px,
+        var(--line-color) 52px
+      );
+    }
+
+    .node-card {
+      position: fixed;
+      background: var(--node-color);
+      border: 1px solid var(--node-border);
+      border-radius: 14px;
+      padding: 11px 14px;
+      display: flex; align-items: center; gap: 9px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      animation: nodeDrift linear infinite;
+      white-space: nowrap;
+      z-index: 1; pointer-events: none;
+    }
+    .node-dot {
+      width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    }
+    .node-dot.on  { background: #30D158; }
+    .node-dot.off { background: var(--border-strong); }
+    .node-label {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.1px;
+    }
+    .node-status {
+      font-size: 11px; font-weight: 700;
+      margin-left: auto; padding-left: 10px;
+    }
+    .node-status.on  { color: #30D158; }
+    .node-status.off { color: var(--text-secondary); }
+    [data-theme="light"] .node-dot.on   { background: #28A745; }
+    [data-theme="light"] .node-status.on { color: #28A745; }
+
+    @keyframes nodeDrift {
+      0%   { transform: translateY(0);       opacity: 0; }
+      8%   { opacity: 1; }
+      88%  { opacity: 1; }
+      100% { transform: translateY(-115vh);  opacity: 0; }
+    }
+
+    .node-1 { left: 18px;  top: 105vh; animation-duration: 14s; animation-delay: 0s;   }
+    .node-2 { left: 44%;   top: 108vh; animation-duration: 18s; animation-delay: -5s;  }
+    .node-3 { right: 18px; top: 106vh; animation-duration: 12s; animation-delay: -3s;  }
+    .node-4 { left: 18px;  top: 110vh; animation-duration: 16s; animation-delay: -9s;  }
+    .node-5 { right: 18px; top: 107vh; animation-duration: 13s; animation-delay: -7s;  }
+    .node-6 { left: 38%;   top: 109vh; animation-duration: 19s; animation-delay: -12s; }
+
+    .hero-fade {
+      position: fixed; inset: 0;
+      z-index: 2; pointer-events: none;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 58%);
+      mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 58%);
+      background: transparent;
+    }
+
+    .hero-fade::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, var(--bg) 0%, rgba(0,0,0,0) 52%);
+      opacity: 0.5;
+    }
+    [data-theme="light"] .hero-fade::after {
+      background: linear-gradient(to bottom, var(--bg) 0%, rgba(242,242,247,0) 52%);
+    }
+
+    .brand-block {
+      position: relative; z-index: 10;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 24px 28px 20px;
+      min-height: 0;
+    }
+
+    .brand-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 5px 12px 5px 8px;
+      margin-bottom: 14px;
+      width: fit-content;
+    }
+    .brand-tag-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--active-light);
+      flex-shrink: 0;
+    }
+    .brand-tag-text {
+      font-size: 11px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.2px;
+    }
+
+    .brand-headline {
+      font-size: 34px; font-weight: 700;
+      letter-spacing: -1.2px; line-height: 1.06;
+      color: var(--text-primary);
+      margin-bottom: 10px;
+    }
+    .brand-headline em {
+      font-style: italic; font-weight: 300;
+      color: var(--text-secondary);
+    }
+    .brand-desc {
+      font-size: 13px; font-weight: 400;
+      color: var(--text-secondary); line-height: 1.6;
+      max-width: 255px;
+    }
+
+    .stat-strip {
+      position: relative; z-index: 10;
+      display: flex;
+      padding: 16px 0 0;
+    }
+    .stat-item {
+      flex: 1; padding-right: 20px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; padding-right: 0; padding-left: 20px; }
+    .stat-num {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.4px;
+      color: var(--text-primary); line-height: 1;
+    }
+    .stat-label {
+      font-size: 10px; font-weight: 500;
+      color: var(--text-secondary); margin-top: 3px;
+    }
+
+    /* ── LOGIN CARD ── */
+    .login-card {
+      position: relative; z-index: 10;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-bottom: none;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      /* Reserve space at the bottom for the info section so it never pushes the form */
+      padding: 24px 24px 0;
+      flex-shrink: 0;
+      animation: slideUp 0.48s cubic-bezier(0.32, 0.72, 0, 1) both;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(110%); }
+      to   { transform: translateY(0); }
+    }
+
+    /* Inner scroll wrapper so form + info sit in fixed card height */
+    .card-inner {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-handle {
+      width: 36px; height: 4px;
+      background: var(--border-strong);
+      border-radius: 2px; margin: 0 auto 22px;
+    }
+
+    .card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 22px; gap: 12px;
+    }
+    .card-title {
+      font-size: 22px; font-weight: 700; letter-spacing: -0.5px;
+      color: var(--text-primary); line-height: 1.1;
+    }
+    .card-title span {
+      display: block; font-size: 13px; font-weight: 400;
+      color: var(--text-secondary); letter-spacing: 0; margin-top: 4px;
+    }
+
+    .logo-mark {
+      width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--active-light); font-size: 1.1rem; overflow: hidden;
+    }
+    .logo-mark img {
+      width: 100%; height: 100%; object-fit: contain;
+      -webkit-user-drag: none; user-drag: none;
+      -webkit-user-select: none; user-select: none;
+      pointer-events: none;
+    }
+
+    .field-label {
+      display: block; font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px;
+      color: var(--text-secondary); margin-bottom: 8px; padding-left: 2px;
+    }
+    .form-group { margin-bottom: 14px; position: relative; }
+    .input-wrapper { position: relative; }
+
+    .input-icon {
+      position: absolute; left: 15px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      stroke: var(--text-secondary); pointer-events: none;
+    }
+    .password-toggle {
+      position: absolute; right: 15px; top: 50%;
+      transform: translateY(-50%);
+      width: 16px; height: 16px;
+      stroke: var(--text-secondary); cursor: pointer;
+      transition: opacity 0.15s; z-index: 10;
+    }
+    .password-toggle:active { transform: translateY(-50%) scale(0.88); }
+
+    input {
+      width: 100%; padding: 14px 16px 14px 44px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px; font-family: 'Inter', sans-serif; outline: none;
+      transition: border-color 0.2s;
+    }
+    input.no-right-icon { padding-right: 16px; }
+    input.has-toggle    { padding-right: 44px; }
+    input:focus { border-color: var(--active-blue); }
+    input::placeholder { color: var(--text-secondary); }
+
+    .error {
+      color: var(--danger); font-size: 12px;
+      margin-top: 6px; padding-left: 4px;
+      font-weight: 600; display: none;
+    }
+    .error.show { display: block; }
+
+    .submit-btn {
+      width: 100%; padding: 16px;
+      background: var(--text-primary);
+      border: none; border-radius: var(--radius-md);
+      color: var(--card-bg);
+      font-weight: 700; font-size: 15px; font-family: 'Inter', sans-serif;
+      cursor: pointer; margin-top: 6px;
+      letter-spacing: -0.2px;
+      transition: var(--transition);
+    }
+    .submit-btn:active { transform: scale(0.98); opacity: 0.8; }
+
+    /* ── Info section: sits BELOW the form, no pushing ── */
+    .info-section {
+      /* Uses normal flow but is isolated so it doesn't shift form content */
+      margin-top: 18px;
+      padding: 16px 0 max(env(safe-area-inset-bottom, 0px), 32px);
+      border-top: 1px solid var(--border);
+      /* min-height keeps the card stable whether account-info is shown or hidden */
+      min-height: 52px;
+    }
+
+    .info-text {
+      text-align: center; color: var(--text-secondary);
+      font-size: 12px; line-height: 1.6; margin-bottom: 0;
+    }
+
+    /* account-info expands downward only, never pushes up */
+    .account-info {
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      /* hidden by default — no layout contribution when hidden */
+      display: none;
+      margin-top: 12px;
+    }
+    .account-info.show { display: block; }
+
+    .account-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--text-secondary); margin-bottom: 5px;
+    }
+    .saved-email {
+      color: var(--text-primary); font-weight: 600; font-size: 13px;
+      margin-bottom: 12px; word-break: break-all;
+    }
+    .clear-btn {
+      width: 100%; padding: 10px;
+      background: transparent;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-sm);
+      color: var(--danger); font-weight: 600;
+      font-size: 12px; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: var(--transition);
+    }
+    .clear-btn:active { transform: scale(0.97); }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      display: none; align-items: flex-end; justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border); border-bottom: none;
+      border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+      padding: 24px 24px max(env(safe-area-inset-bottom, 0px), 28px);
+      width: 100%; max-width: 430px;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: var(--border-strong);
+      border-radius: 2px; margin: 0 auto 22px;
+    }
+
+    .modal-icon {
+      width: 46px; height: 46px; margin: 0 0 14px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-icon svg { width: 20px; height: 20px; stroke: var(--text-secondary); stroke-width: 2; }
+
+    .modal-title {
+      font-size: 20px; font-weight: 700; letter-spacing: -0.4px;
+      margin-bottom: 8px; color: var(--text-primary);
+    }
+    .modal-message {
+      color: var(--text-secondary); line-height: 1.6;
+      margin-bottom: 22px; font-size: 14px;
+    }
+    .modal-email { color: var(--text-primary); font-weight: 600; word-break: break-all; }
+
+    .modal-buttons { display: flex; gap: 10px; }
+    .modal-btn {
+      flex: 1; padding: 15px; border: none;
+      border-radius: var(--radius-md); font-weight: 700;
+      font-size: 14px; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: var(--transition);
+    }
+    .modal-btn:active { transform: scale(0.97); }
+    .modal-btn-primary  { background: var(--text-primary); color: var(--card-bg); }
+    .modal-btn-secondary {
+      background: var(--surface-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+
+  <div class="hero"></div>
+  <div class="hero-fade"></div>
+
+  <div class="node-card node-1">
+    <div class="node-dot on"></div>
+    <div class="node-label">Living Room Plug</div>
+    <div class="node-status on">On</div>
+  </div>
+  <div class="node-card node-2">
+    <div class="node-dot off"></div>
+    <div class="node-label">Bedroom Lamp</div>
+    <div class="node-status off">Off</div>
+  </div>
+  <div class="node-card node-3">
+    <div class="node-dot on"></div>
+    <div class="node-label">Office Plug</div>
+    <div class="node-status on">On</div>
+  </div>
+  <div class="node-card node-4">
+    <div class="node-dot on"></div>
+    <div class="node-label">Kitchen Socket</div>
+    <div class="node-status on">On</div>
+  </div>
+  <div class="node-card node-5">
+    <div class="node-dot off"></div>
+    <div class="node-label">Study Plug</div>
+    <div class="node-status off">Off</div>
+  </div>
+  <div class="node-card node-6">
+    <div class="node-dot on"></div>
+    <div class="node-label">Hall Plug</div>
+    <div class="node-status on">On</div>
+  </div>
+
+  <div class="brand-block">
+    <div class="brand-headline">Control<br><em>everything</em><br>at home.</div>
+    <div class="brand-desc">Manage devices, and automate your space — all in one place.</div>
+
+    <div class="stat-strip">
+      <div class="stat-item">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Live monitoring</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">MQTT</div>
+        <div class="stat-label">Realtime sync</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Login Card ── -->
+  <div class="login-card">
+    <div class="card-inner">
+      <div class="card-handle"></div>
+
+      <div class="card-header">
+        <div class="card-title">
+          Sign in
+          <span>Enter your credentials to continue</span>
+        </div>
+        <div class="logo-mark">
+          <img src="assets/logos/AADAconnect_logo.png" alt="AADAconnect"
+            onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fa-solid fa-plug-circle-bolt\'></i>'">
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+
+        <div class="form-group">
+          <label class="field-label" for="email">Email Address</label>
+          <div class="input-wrapper">
+            <input type="email" id="email" class="no-right-icon" placeholder="your@email.com" required>
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="error" id="emailError">Please enter a valid email address</div>
+        </div>
+
+        <div class="form-group">
+          <label class="field-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <input type="password" id="password" class="has-toggle" placeholder="Enter your password" required>
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <svg class="password-toggle" id="togglePassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div class="error" id="passwordError">Please enter a password</div>
+        </div>
+
+        <div class="error" id="loginError"></div>
+
+        <button type="submit" class="submit-btn">Continue</button>
+      </form>
+
+      <!-- Info section sits AFTER the form in DOM order, expands downward only -->
+      <div class="info-section">
+        <p class="info-text" id="infoText">First time? We'll create an account for you automatically</p>
+        <div class="account-info" id="accountInfo">
+          <div class="account-label">Currently saved account</div>
+          <div class="saved-email" id="savedEmail"></div>
+          <button class="clear-btn" onclick="clearAccount()">Clear Saved Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Switch Account Modal ── -->
+<div class="modal-overlay" id="switchModal">
+  <div class="modal-content">
+    <div class="modal-handle"></div>
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="8.5" cy="7" r="4"/>
+        <polyline points="17 11 19 13 23 9"/>
+      </svg>
+    </div>
+    <h2 class="modal-title">Switch Account?</h2>
+    <p class="modal-message">
+      An account (<span class="modal-email" id="existingEmail"></span>) is already saved.
+      Do you want to switch to the new account?
+    </p>
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-secondary" onclick="cancelSwitch()">Cancel</button>
+      <button class="modal-btn modal-btn-primary" onclick="confirmSwitch()">Switch</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script>
+  // Prevent logo from being saved via long-press or right-click
+  document.querySelector('.logo-mark').addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+  let pendingAccount = null;
+
+  function initTheme() {
+    const saved = localStorage.getItem('appTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+
+  document.getElementById('togglePassword').addEventListener('click', function() {
+    const input = document.getElementById('password');
+    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+    input.setAttribute('type', type);
+    this.innerHTML = type === 'text'
+      ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+      : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  });
+
+  function hashValue(value) {
+    return CryptoJS.SHA256(value).toString(CryptoJS.enc.Hex);
+  }
+
+  function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+    const loginError = document.getElementById('loginError');
+    emailError.classList.remove('show');
+    passwordError.classList.remove('show');
+    loginError.classList.remove('show');
+    if (!email || !password) {
+      if (!email) emailError.classList.add('show');
+      if (!password) passwordError.classList.add('show');
+      return;
+    }
+    const hashedEmail = hashValue(email);
+    const hashedPassword = hashValue(password);
+    const accountKey = hashedEmail + '|' + hashedPassword;
+    const existingAccount = localStorage.getItem('aada_account');
+    const existingEmail = localStorage.getItem('aada_email');
+    if (!existingAccount) {
+      saveAccount(email, password, hashedEmail, hashedPassword);
+      loginUser(email, password, hashedEmail, hashedPassword);
+      alert('Account created successfully!');
+      window.location.href = 'dashboard.html';
+    } else if (existingAccount === accountKey) {
+      loginUser(email, password, hashedEmail, hashedPassword);
+      window.location.href = 'dashboard.html';
+    } else {
+      pendingAccount = { email, password, hashedEmail, hashedPassword };
+      document.getElementById('existingEmail').textContent = existingEmail;
+      document.getElementById('switchModal').classList.add('active');
+    }
+  }
+
+  function saveAccount(email, password, hashedEmail, hashedPassword) {
+    const accountKey = hashedEmail + '|' + hashedPassword;
+    localStorage.setItem('aada_account', accountKey);
+    localStorage.setItem('aada_email', email);
+    localStorage.setItem('aada_password', password);
+    localStorage.setItem('aada_hashed_email', hashedEmail);
+    localStorage.setItem('aada_hashed_password', hashedPassword);
+  }
+
+  function loginUser(email, password, hashedEmail, hashedPassword) {
+    sessionStorage.setItem('current_user', JSON.stringify({ email, password, hashed_email: hashedEmail, hashed_password: hashedPassword }));
+  }
+
+  function clearAllAccountData() {
+    ['aada_account','aada_email','aada_password','aada_hashed_email','aada_hashed_password'].forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
+  }
+
+  function confirmSwitch() {
+    if (!pendingAccount) return;
+    clearAllAccountData();
+    saveAccount(pendingAccount.email, pendingAccount.password, pendingAccount.hashedEmail, pendingAccount.hashedPassword);
+    loginUser(pendingAccount.email, pendingAccount.password, pendingAccount.hashedEmail, pendingAccount.hashedPassword);
+    document.getElementById('switchModal').classList.remove('active');
+    pendingAccount = null;
+    alert('Account switched successfully!');
+    window.location.href = 'dashboard.html';
+  }
+
+  function cancelSwitch() {
+    document.getElementById('switchModal').classList.remove('active');
+    pendingAccount = null;
+    const loginError = document.getElementById('loginError');
+    loginError.textContent = 'Please use the saved account or clear it to create a new one';
+    loginError.classList.add('show');
+  }
+
+  function clearAccount() {
+    const savedEmail = localStorage.getItem('aada_email');
+    if (!savedEmail) { alert('No account saved to clear'); return; }
+    if (confirm(`Are you sure you want to clear the saved account (${savedEmail})? This will log you out.`)) {
+      clearAllAccountData(); location.reload();
+    }
+  }
+
+  function showAccountInfo() {
+    const savedEmail = localStorage.getItem('aada_email');
+    if (savedEmail) {
+      document.getElementById('savedEmail').textContent = savedEmail;
+      document.getElementById('accountInfo').classList.add('show');
+      // Hide the generic helper text when a saved account is shown
+      document.getElementById('infoText').style.display = 'none';
+    }
+  }
+
+  window.onload = function() {
+    initTheme();
+    const currentUser = sessionStorage.getItem('current_user');
+    if (currentUser) { window.location.href = 'dashboard.html'; return; }
+    const remembered = localStorage.getItem('remembered_user');
+    if (remembered && localStorage.getItem('rememberMe') === 'true') {
+      try { sessionStorage.setItem('current_user', remembered); window.location.href = 'dashboard.html'; return; } catch(e) {}
+    }
+    showAccountInfo();
+  };
+</script>
+</body>
+</html>
