@@ -1,0 +1,2479 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AADA - Device Control</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --radius-xl: 32px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* ── Light Theme ── */
+    [data-theme="light"] {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #F0F0F5;
+      --surface-sheet: #FFFFFF;
+      --surface-item: #F8F8FC;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(0,0,0,0.28);
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.1);
+      --accent: #000000;
+      --accent-light: #E5E5EA;
+      --active-light: #FF9500;
+      --active-blue: #0A84FF;
+      --online: #34C759;
+      --online-dim: rgba(52,199,89,0.12);
+      --offline: rgba(0,0,0,0.2);
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.1);
+      --nav-bg: rgba(255,255,255,0.85);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-md: 0 12px 32px rgba(0,0,0,0.08);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.16);
+      --header-fade: linear-gradient(to bottom, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0) 100%);
+      --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --power-on-color: #34C759;
+      --power-off-color: #8E8E93;
+      --power-pending-color: #FF9500;
+      --power-offline-color: #8E8E93;
+    }
+
+    /* ── Dark Theme ── */
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-secondary: #2C2C2E;
+      --surface-sheet: #1C1C1E;
+      --surface-item: #2C2C2E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --text-tertiary: rgba(255,255,255,0.28);
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --accent: #FFFFFF;
+      --accent-light: #3A3A3C;
+      --active-light: #FF9F0A;
+      --active-blue: #0A84FF;
+      --online: #30D158;
+      --online-dim: rgba(48,209,88,0.12);
+      --offline: rgba(255,255,255,0.2);
+      --danger: #FF453A;
+      --danger-dim: rgba(255,69,58,0.12);
+      --nav-bg: rgba(28,28,30,0.85);
+      --shadow-sm: 0 4px 14px rgba(0,0,0,0.3);
+      --shadow-md: 0 16px 40px rgba(0,0,0,0.5);
+      --shadow-lg: 0 16px 48px rgba(0,0,0,0.5);
+      --header-fade: linear-gradient(to bottom, rgba(0,0,0,0.22) 0%, rgba(0,0,0,0) 100%);
+      --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --power-on-color: #30D158;
+      --power-off-color: #636366;
+      --power-pending-color: #FF9F0A;
+      --power-offline-color: #636366;
+    }
+
+    /* Use 100dvh (Dynamic Viewport Height) to prevent bottom bar clipping on mobile */
+    html, body { height: 100%; font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    body {
+      background: var(--bg);
+      display: flex;
+      justify-content: center;
+      overflow: hidden;
+      transition: background 0.3s ease;
+      height: 100dvh; 
+    }
+
+    .phone {
+      width: 100%; max-width: 430px; height: 100%;
+      display: flex; flex-direction: column; position: relative;
+      background: transparent; overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: relative; z-index: 50;
+      padding: calc(env(safe-area-inset-top, 12px) + 12px) 20px 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--surface-secondary);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-sm); cursor: pointer; border: 1px solid var(--border);
+      transition: var(--transition); color: var(--text-primary); font-size: 17px;
+    }
+    .icon-btn:active { transform: scale(0.92); }
+
+    .back-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px 10px 12px;
+      height: 44px; border-radius: 22px;
+      background: var(--surface-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .back-btn:active { transform: scale(0.95); }
+    .back-btn i { font-size: 14px; }
+
+    .header-right { display: flex; gap: 10px; align-items: center; }
+
+    /* ── Scroll content ── */
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: none;
+      display: flex;
+      flex-direction: column;
+    }
+    .content::-webkit-scrollbar { display: none; }
+
+    /* ── Hero Section (Device Image) ── */
+    .hero-section {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 20px;
+      flex: 1; /* Grows to take available vertical space */
+      min-height: 220px; 
+    }
+
+    /* ── Status Top Fade ── */
+    .status-top-fade {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 58vh;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: background 0.7s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .status-top-fade.fade-on {
+      background:
+        linear-gradient(to bottom, rgba(48,209,88,0.28) 0%, rgba(48,209,88,0.08) 40%, transparent 100%);
+      opacity: 1;
+    }
+    .status-top-fade.fade-off {
+      background:
+        linear-gradient(to bottom, rgba(255,69,58,0.24) 0%, rgba(255,69,58,0.07) 40%, transparent 100%);
+      opacity: 1;
+    }
+    .status-top-fade.fade-offline {
+      background:
+        linear-gradient(to bottom, rgba(120,120,128,0.22) 0%, rgba(120,120,128,0.06) 40%, transparent 100%);
+      opacity: 1;
+    }
+
+
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: var(--offline);
+      filter: blur(60px);
+      opacity: 0.2;
+      transition: all var(--transition-smooth);
+      z-index: 0;
+    }
+    @keyframes pulseGlow {
+      0% { transform: scale(1); opacity: 0.35; filter: blur(60px); }
+      50% { transform: scale(1.15); opacity: 0.55; filter: blur(75px); }
+      100% { transform: scale(1); opacity: 0.35; filter: blur(60px); }
+    }
+    .hero-glow.power-on {
+      background: var(--power-on-color);
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+    .hero-glow.power-off { background: var(--power-off-color); opacity: 0.15; }
+    .hero-glow.power-offline { background: var(--power-offline-color); opacity: 0.1; }
+    @keyframes pulsePendingGlow {
+      0% { opacity: 0.2; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.1); }
+      100% { opacity: 0.2; transform: scale(1); }
+    }
+    .hero-glow.power-pending {
+      background: var(--power-pending-color);
+      animation: pulsePendingGlow 1.5s infinite;
+    }
+
+    .hero-image {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      max-width: 260px;
+      object-fit: contain; /* Keeps it proportional, utilizes transparent bg */
+      filter: drop-shadow(0 20px 40px rgba(0,0,0,0.25));
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      draggable: false;
+    }
+
+    /* Transparent overlay to block long-press / context-menu on hero image */
+    .hero-image-shield {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── Bottom Section (Info Card & Power Toggle) ── */
+    .bottom-section {
+      flex-shrink: 0;
+      padding-bottom: 0;
+    }
+
+    /* ── Integrated Device Info Panel (no box) ── */
+    .device-card-header {
+      margin: 0;
+      padding: 0 20px;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      position: relative;
+      z-index: 10;
+      transition: none;
+      overflow: visible;
+    }
+    .device-card-header.card-on { border: none; box-shadow: none; }
+    [data-theme="light"] .device-card-header.card-on { border: none; box-shadow: none; }
+
+    /* ── Name + chips row ── */
+    .device-meta-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+    }
+    .device-meta-left { display: flex; align-items: center; flex: 1; min-width: 0; }
+
+    .device-name-wrap { flex: 1; min-width: 0; }
+    .device-label-tag {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.8px;
+      color: var(--text-tertiary); margin-bottom: 4px;
+    }
+    .device-name-text {
+      font-size: 26px; font-weight: 700; letter-spacing: -0.8px;
+      color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      line-height: 1.1;
+    }
+    .device-room-badge {
+      display: none; align-items: center; gap: 5px;
+      margin-top: 7px;
+      padding: 4px 10px 4px 8px; border-radius: 100px;
+      background: rgba(10,132,255,0.09); border: 1px solid rgba(10,132,255,0.18);
+      font-size: 11px; font-weight: 600; color: var(--active-blue);
+      cursor: pointer; transition: var(--transition);
+      width: fit-content;
+    }
+    .device-room-badge::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--active-blue); opacity: 0.7; flex-shrink: 0;
+    }
+    .device-room-badge:active { opacity: 0.7; }
+
+    /* ── Compact action chips ── */
+    .device-action-chips { display: flex; gap: 8px; flex-shrink: 0; }
+    .action-chip {
+      height: 32px; padding: 0 14px; border-radius: 100px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition); flex-shrink: 0;
+    }
+    .action-chip:active { transform: scale(0.91); opacity: 0.7; }
+    .action-chip.room-chip {
+      background: rgba(10,132,255,0.08); border-color: rgba(10,132,255,0.2);
+      color: var(--active-blue);
+    }
+
+    /* ── Power Row — borderless, uses hairlines for separation ── */
+    .power-toggle-wrap {
+      margin-bottom: 0;
+      padding: 14px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .power-toggle-row {
+      display: flex; align-items: center; gap: 14px;
+      background: transparent; border: none; padding: 0;
+      transition: none;
+    }
+    .power-toggle-row.row-on { background: transparent; border: none; }
+    [data-theme="light"] .power-toggle-row.row-on { background: transparent; border: none; }
+    .power-toggle-labels {
+      display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0;
+    }
+    .power-toggle-title {
+      font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px;
+    }
+    .power-status-text {
+      font-size: 12px; font-weight: 500; color: var(--text-secondary); transition: color 0.3s;
+    }
+    .power-status-text.status-on     { color: var(--power-on-color); font-weight: 600; }
+    .power-status-text.status-off    { color: var(--text-secondary); }
+    .power-status-text.status-pending{ color: var(--power-pending-color); font-weight: 600; }
+    .power-status-text.status-offline{ color: var(--text-tertiary); }
+    .power-status-text.status-checking{ color: var(--text-tertiary); }
+
+    /* ── Feature Actions — icon pill + label, no borders ── */
+    .feature-cards-row {
+      display: flex; gap: 0; margin: 0;
+      padding: 10px 0 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .feature-card {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 7px;
+      padding: 10px 4px 8px;
+      background: transparent; border: none; border-radius: 0;
+      cursor: pointer; position: relative; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .feature-card:not(:last-child)::after {
+      content: ''; position: absolute; right: 0; top: 22%; bottom: 22%;
+      width: 1px; background: var(--border);
+    }
+    .feature-card:active { opacity: 0.4; }
+    .feature-card-icon {
+      width: 38px; height: 38px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; flex-shrink: 0;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .feature-card.timer-card    .feature-card-icon { background: rgba(255,159,10,0.14); color: var(--active-light); }
+    .feature-card.schedule-card .feature-card-icon { background: rgba(10,132,255,0.11); color: var(--active-blue); }
+    .feature-card.auto-card     .feature-card-icon { background: rgba(48,209,88,0.11);  color: var(--online); }
+    .feature-card:not(.active-feature) .feature-card-icon { opacity: 0.65; }
+    .feature-card-label {
+      font-size: 11px; font-weight: 600; line-height: 1;
+    }
+    .feature-card.timer-card    .feature-card-label { color: var(--active-light); }
+    .feature-card.schedule-card .feature-card-label { color: var(--active-blue); }
+    .feature-card.auto-card     .feature-card-label { color: var(--online); }
+    .feature-card:not(.active-feature) .feature-card-label { opacity: 0.55; }
+    /* Active feature card: colored background shadow from border fading inward toward icon */
+    .feature-card.active-feature {
+      background: transparent;
+    }
+    .feature-card.timer-card.active-feature {
+      background: radial-gradient(ellipse 80% 90% at 50% 100%, rgba(255,159,10,0.18) 0%, transparent 70%),
+                  linear-gradient(to top, rgba(255,159,10,0.10) 0%, transparent 60%);
+      box-shadow: inset 0 -2px 0 0 rgba(255,159,10,0.35);
+    }
+    .feature-card.schedule-card.active-feature {
+      background: radial-gradient(ellipse 80% 90% at 50% 100%, rgba(10,132,255,0.16) 0%, transparent 70%),
+                  linear-gradient(to top, rgba(10,132,255,0.09) 0%, transparent 60%);
+      box-shadow: inset 0 -2px 0 0 rgba(10,132,255,0.35);
+    }
+    .feature-card.auto-card.active-feature {
+      background: radial-gradient(ellipse 80% 90% at 50% 100%, rgba(48,209,88,0.15) 0%, transparent 70%),
+                  linear-gradient(to top, rgba(48,209,88,0.08) 0%, transparent 60%);
+      box-shadow: inset 0 -2px 0 0 rgba(48,209,88,0.35);
+    }
+    .feature-card-badge {
+      display: none; position: absolute; top: 9px;
+      left: calc(50% + 9px);
+      width: 6px; height: 6px; border-radius: 50%;
+      border: 1.5px solid var(--bg);
+    }
+    .feature-card.active-feature .feature-card-badge { display: block; }
+    .feature-card.timer-card.active-feature    .feature-card-badge { background: var(--active-light); }
+    .feature-card.schedule-card.active-feature .feature-card-badge { background: var(--active-blue); }
+    .feature-card.auto-card.active-feature     .feature-card-badge { background: var(--online); }
+    .feature-card-body, .feature-card-sub, .feature-card-right, .feature-card-chevron { display: none; }
+
+    /* ── Device Action Buttons (legacy, hidden) ── */
+    .device-actions-row { display: none; }
+
+    /* The actual toggle switch */
+    .power-toggle-switch {
+      position: relative;
+      width: 72px; height: 40px;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .power-toggle-switch.disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+    @keyframes toggleShake {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-4px); }
+      40% { transform: translateX(4px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+    .power-toggle-switch.shake { animation: toggleShake 0.35s ease; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      border-radius: 20px;
+      background: var(--surface-secondary);
+      border: 1.5px solid var(--border-strong);
+      transition: background 0.35s cubic-bezier(0.4,0,0.2,1),
+                  border-color 0.35s, box-shadow 0.35s;
+      overflow: hidden;
+    }
+    .toggle-track::after {
+      /* subtle inner track shimmer */
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .power-toggle-switch.toggle-on .toggle-track {
+      background: var(--power-on-color);
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 0 16px rgba(48,209,88,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    .power-toggle-switch.toggle-pending .toggle-track {
+      background: var(--power-pending-color);
+      border-color: rgba(255,255,255,0.1);
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 30px; height: 30px;
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.22), 0 1px 2px rgba(0,0,0,0.14);
+      transition: transform 0.35s cubic-bezier(0.34,1.3,0.64,1),
+                  width 0.18s ease;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      color: #888; /* always dark on white thumb — works in both themes */
+    }
+    .power-toggle-switch.toggle-on .toggle-thumb {
+      transform: translateX(32px);
+      color: var(--power-on-color);
+    }
+    .power-toggle-switch.toggle-pending .toggle-thumb {
+      transform: translateX(16px);
+      color: var(--power-pending-color);
+    }
+    /* Squeeze thumb on press */
+    .power-toggle-switch:active .toggle-thumb {
+      width: 34px;
+    }
+    .power-toggle-switch.toggle-on:active .toggle-thumb {
+      transform: translateX(28px);
+      width: 34px;
+    }
+
+    /* ── Divider ── */
+    .card-divider {
+      height: 1px; background: var(--border); margin: 0 0 12px;
+    }
+
+    /* Connection indicator */
+    .conn-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0 0;
+    }
+    .conn-left { display: flex; align-items: center; gap: 8px; }
+    .conn-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--offline); transition: background 0.3s; flex-shrink: 0;
+    }
+    .conn-dot.connected { background: var(--online); box-shadow: 0 0 6px var(--online); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1; transform:scale(1)} 50%{opacity:0.7; transform:scale(1.2)} }
+    .conn-text { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .conn-subtext { font-size: 11px; color: var(--text-secondary); }
+
+    /* Room Badge */
+    .room-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 100px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; transition: var(--transition);
+    }
+    .room-badge:active { transform: scale(0.95); }
+    .room-badge.has-room {
+      background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.25);
+      color: var(--active-blue);
+    }
+    .room-badge i { font-size: 10px; }
+
+    /* Ping Badge */
+    .ping-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 100px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      transition: var(--transition); user-select: none;
+    }
+    .ping-badge i { font-size: 10px; opacity: 0.6; }
+    .ping-badge.ping-good {
+      background: var(--online-dim); border-color: rgba(48,209,88,0.28); color: var(--online);
+    }
+    .ping-badge.ping-good i { opacity: 1; }
+    .ping-badge.ping-slow {
+      background: rgba(255,159,10,0.1); border-color: rgba(255,159,10,0.28); color: var(--active-light);
+    }
+    .ping-badge.ping-slow i { opacity: 1; }
+    .ping-badge.ping-fail {
+      background: var(--danger-dim); border-color: rgba(255,69,58,0.22); color: var(--danger);
+    }
+    .ping-badge.ping-fail i { opacity: 1; }
+
+    /* ── Device Action Buttons (legacy, hidden) ── */
+    .device-actions-row { display: none; }
+
+    /* ── Timer Inline Drum Picker ── */
+    .timer-picker {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; padding: 20px 0 24px;
+      position: relative; user-select: none;
+    }
+    .timer-picker-colon {
+      font-size: 52px; font-weight: 200; color: var(--text-tertiary);
+      line-height: 1; padding: 0 2px; flex-shrink: 0;
+      letter-spacing: -2px; margin-bottom: 2px;
+    }
+    .timer-picker-col {
+      display: flex; flex-direction: column;
+      width: 88px; height: 160px;
+      overflow-y: scroll; overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      position: relative; z-index: 1;
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0,0,0,0.15) 20%,
+        black 40%,
+        black 60%,
+        rgba(0,0,0,0.15) 80%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(0,0,0,0.15) 20%,
+        black 40%,
+        black 60%,
+        rgba(0,0,0,0.15) 80%,
+        transparent 100%
+      );
+    }
+    .timer-picker-col::-webkit-scrollbar { display: none; }
+    .timer-picker-item {
+      flex-shrink: 0; height: 64px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px; font-weight: 200; letter-spacing: -2px;
+      color: var(--text-primary);
+      scroll-snap-align: center;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    /* Spacers: (160 - 64) / 2 = 48px */
+    .timer-picker-spacer { flex-shrink: 0; height: 48px; }
+    /* Label below each col */
+    .timer-picker-col-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .timer-picker-label {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.4px; color: var(--text-tertiary);
+      margin-top: -2px;
+    }
+    /* Selection highlight line above/below selected item */
+    .timer-picker-col-wrap {
+      position: relative;
+    }
+    .timer-picker-col-wrap::before,
+    .timer-picker-col-wrap::after {
+      content: '';
+      position: absolute; left: 4px; right: 4px;
+      height: 1px; background: var(--border);
+      pointer-events: none; z-index: 10;
+    }
+    .timer-picker-col-wrap::before { top: calc(50% - 32px); }
+    .timer-picker-col-wrap::after  { top: calc(50% + 32px); }
+    /* Drum tap-to-edit input */
+    .timer-picker-col-wrap { position: relative; }
+    .drum-tap-input {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px; height: 64px;
+      background: var(--surface);
+      border: 2px solid var(--active-blue);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 42px; font-weight: 200;
+      letter-spacing: -1px;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+      font-family: inherit;
+      outline: none;
+      z-index: 20;
+      caret-color: var(--active-blue);
+      -moz-appearance: textfield;
+      padding: 0;
+    }
+    .drum-tap-input::-webkit-outer-spin-button,
+    .drum-tap-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .timer-action-row {
+      display: flex; gap: 6px; margin-bottom: 12px;
+    }
+    .timer-action-chip {
+      flex: 1; padding: 10px 6px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 700; color: var(--text-secondary);
+      text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .timer-action-chip:active { transform: scale(0.95); }
+    .timer-action-chip.selected {
+      background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.3);
+      color: var(--active-blue);
+    }
+    .timer-quick-row { display: flex; gap: 6px; margin-bottom: 16px; }
+    .timer-quick-chip {
+      flex: 1; padding: 8px 4px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; color: var(--text-secondary);
+      text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .timer-quick-chip:active { transform: scale(0.95); opacity: 0.7; }
+
+    /* ── Schedule Sheet ── */
+    .schedule-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .schedule-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      transition: all 0.15s;
+    }
+    .schedule-item-time {
+      font-size: 20px; font-weight: 700; color: var(--text-primary);
+      letter-spacing: -0.5px; font-variant-numeric: tabular-nums;
+      min-width: 58px;
+    }
+    .schedule-item-body { flex: 1; min-width: 0; }
+    .schedule-item-action {
+      font-size: 12px; font-weight: 700;
+      padding: 3px 9px; border-radius: 100px;
+      display: inline-block; margin-bottom: 3px;
+    }
+    .schedule-item-action.on {
+      background: var(--online-dim); color: var(--online);
+    }
+    .schedule-item-action.off {
+      background: var(--surface-secondary); color: var(--text-secondary);
+    }
+    .schedule-item-days {
+      font-size: 11px; color: var(--text-secondary); font-weight: 500;
+    }
+    .schedule-toggle {
+      width: 44px; height: 26px; border-radius: 13px;
+      background: var(--surface-secondary); border: 1.5px solid var(--border);
+      position: relative; cursor: pointer; transition: all 0.25s; flex-shrink: 0;
+    }
+    .schedule-toggle::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--text-tertiary); transition: all 0.25s;
+    }
+    .schedule-toggle.enabled {
+      background: var(--active-blue); border-color: var(--active-blue);
+    }
+    .schedule-toggle.enabled::after {
+      background: #fff; transform: translateX(18px);
+    }
+    .schedule-empty {
+      text-align: center; padding: 28px 20px;
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+    }
+    .schedule-empty i {
+      font-size: 28px; margin-bottom: 10px; display: block;
+      color: var(--text-tertiary);
+    }
+    .days-picker { display: flex; gap: 6px; margin-top: 10px; }
+    .day-chip {
+      flex: 1; padding: 8px 2px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; color: var(--text-secondary);
+      text-align: center; cursor: pointer; transition: all 0.15s;
+    }
+    .day-chip:active { transform: scale(0.9); }
+    .day-chip.selected {
+      background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.3);
+      color: var(--active-blue);
+    }
+    .time-input-row { display: flex; gap: 8px; align-items: center; }
+    .time-input-row input[type="time"] {
+      flex: 1; padding: 12px 14px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 17px; font-weight: 600; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    .time-input-row input[type="time"]:focus { border-color: var(--active-blue); }
+
+    /* ── Automation Sheet ── */
+    .automation-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .automation-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+    }
+    .automation-item-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .automation-item-body { flex: 1; min-width: 0; }
+    .automation-item-title {
+      font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;
+    }
+    .automation-item-sub { font-size: 12px; color: var(--text-secondary); }
+    .trigger-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .trigger-option:last-child { margin-bottom: 0; }
+    .trigger-option:active { transform: scale(0.98); }
+    .trigger-option.selected {
+      background: rgba(10,132,255,0.08); border-color: rgba(10,132,255,0.28);
+    }
+    .trigger-option-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0; color: var(--text-secondary);
+    }
+    .trigger-option.selected .trigger-option-icon {
+      background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.28);
+      color: var(--active-blue);
+    }
+    .trigger-option-body { flex: 1; }
+    .trigger-option-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .trigger-option-sub { font-size: 12px; color: var(--text-secondary); }
+    .trigger-check { color: var(--active-blue); font-size: 14px; display: none; }
+    .trigger-option.selected .trigger-check { display: block; }
+    .automation-empty {
+      text-align: center; padding: 28px 20px;
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+    }
+    .automation-empty i {
+      font-size: 28px; margin-bottom: 10px; display: block; color: var(--text-tertiary);
+    }
+
+    /* power-control-row CSS removed — integrated into device-card-header */
+
+    /* ── Bottom Sheet ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .overlay.show { opacity: 1; pointer-events: all; }
+
+    .sheet {
+      position: fixed; bottom: 0; left: 50%;
+      transform: translateX(-50%) translateY(105%);
+      width: 100%; max-width: 430px;
+      background: var(--surface-sheet);
+      border: 1px solid var(--border); border-bottom: none;
+      border-radius: 24px 24px 0 0; padding: 0 0 40px;
+      z-index: 300; transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+      max-height: 80vh; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .sheet.show { transform: translateX(-50%) translateY(0); }
+
+    .sheet-handle-area { padding: 12px 20px 0; flex-shrink: 0; }
+    .sheet-handle { width: 36px; height: 4px; background: var(--surface-secondary); border-radius: 2px; margin: 0 auto 16px; }
+    .sheet-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .sheet-back {
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-secondary); font-size: 12px; flex-shrink: 0; transition: all 0.15s;
+    }
+    .sheet-back:active { transform: scale(0.9); }
+    .sheet-title { font-size: 17px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.2px; }
+    .sheet-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 20px; flex: 1; }
+    .sheet-scroll::-webkit-scrollbar { display: none; }
+    .sheet-footer { padding: 12px 20px 0; flex-shrink: 0; border-top: 1px solid var(--border); }
+    .sheet-cat {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: var(--text-tertiary); margin: 16px 0 8px;
+    }
+    .sheet-cat:first-child { margin-top: 0; }
+
+    .sheet-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 13px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .sheet-item:last-child { margin-bottom: 0; }
+    .sheet-item:active { transform: scale(0.98); background: var(--surface-secondary); }
+    .sheet-item.danger-item .item-title { color: var(--danger); }
+    .sheet-item.danger-item .item-icon { background: var(--danger-dim); border-color: rgba(255,69,58,0.2); color: var(--danger); }
+
+    .item-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); font-size: 14px; flex-shrink: 0;
+    }
+    .item-icon.blue { background: rgba(10,132,255,0.12); border-color: rgba(10,132,255,0.25); color: var(--active-blue); }
+    .item-icon.green { background: var(--online-dim); border-color: rgba(48,209,88,0.25); color: var(--online); }
+
+    .item-body { flex: 1; min-width: 0; }
+    .item-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .item-sub { font-size: 12px; color: var(--text-secondary); }
+    .item-chevron { color: var(--text-tertiary); font-size: 11px; }
+
+    /* ── Room list inside sheet ── */
+    .room-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; background: var(--surface-item);
+      border: 1px solid var(--border); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .room-option:last-child { margin-bottom: 0; }
+    .room-option:active { transform: scale(0.98); }
+    .room-option.selected {
+      background: rgba(10,132,255,0.1); border-color: rgba(10,132,255,0.3);
+    }
+    .room-option-icon {
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .room-option.selected .room-option-icon { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.3); }
+    .room-option-name { flex: 1; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .room-option-count { font-size: 12px; color: var(--text-secondary); }
+    .room-option-check { color: var(--active-blue); font-size: 14px; display: none; }
+    .room-option.selected .room-option-check { display: block; }
+
+    /* ── Input fields ── */
+    .sheet-input-wrap { margin-bottom: 12px; }
+    .sheet-input-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: var(--text-secondary); margin-bottom: 8px; }
+    .sheet-input {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      font-size: 15px; font-family: inherit; outline: none;
+      transition: border-color 0.2s;
+    }
+    .sheet-input:focus { border-color: var(--active-blue); }
+    .sheet-input::placeholder { color: var(--text-tertiary); }
+
+    .sheet-input-emoji-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .emoji-btn {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      background: var(--surface-secondary); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; transition: all 0.15s;
+    }
+    .emoji-btn:active { transform: scale(0.9); }
+    .emoji-btn.selected { background: rgba(10,132,255,0.15); border-color: rgba(10,132,255,0.4); }
+
+    .sheet-btn {
+      width: 100%; padding: 14px;
+      border-radius: var(--radius-md); border: none;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: all 0.2s; margin-top: 8px;
+    }
+    .sheet-btn.primary { background: var(--active-blue); color: #fff; }
+    .sheet-btn.primary:active { opacity: 0.85; transform: scale(0.98); }
+    .sheet-btn.secondary { background: var(--surface-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+    .sheet-btn.secondary:active { transform: scale(0.98); }
+    .sheet-btn.danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,69,58,0.2); }
+    .sheet-btn.danger:active { transform: scale(0.98); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+      left: 50%; transform: translateX(-50%) translateY(20px);
+      background: var(--surface); border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md); padding: 12px 20px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      box-shadow: var(--shadow-md); z-index: 999;
+      opacity: 0; pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast-warn {
+      background: var(--surface);
+      border-color: rgba(255,159,10,0.35);
+      color: var(--active-light);
+    }
+    [data-theme="light"] .toast-warn { border-color: rgba(255,149,0,0.35); color: var(--active-light); }
+
+    /* Empty state */
+    .empty-rooms {
+      text-align: center; padding: 28px 20px;
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+    }
+    .empty-rooms i { font-size: 28px; margin-bottom: 10px; display: block; color: var(--text-tertiary); }
+
+    /* ── Timer Capsule (replaces icon in timer card when active) ── */
+    #timerCardIconSlot.capsule-active {
+      background: transparent !important;
+      width: auto; height: auto; border-radius: 0;
+    }
+    .timer-card-capsule {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      animation: capsuleIn 0.38s cubic-bezier(0.34,1.3,0.64,1) both;
+    }
+    @keyframes capsuleIn {
+      from { opacity: 0; transform: scale(0.6); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .timer-capsule-time {
+      font-size: 13px; font-weight: 800;
+      font-variant-numeric: tabular-nums; letter-spacing: -0.5px;
+      color: var(--active-light);
+      line-height: 1;
+    }
+    .timer-capsule-bar-wrap {
+      width: 32px; height: 3px; border-radius: 2px;
+      background: rgba(255,159,10,0.18);
+      overflow: hidden;
+    }
+    .timer-capsule-bar {
+      height: 100%; border-radius: 2px;
+      background: var(--active-light);
+      transition: width 1s linear;
+    }
+  </style>
+</head>
+<body>
+<div class="status-top-fade fade-offline" id="statusTopFade"></div>
+<div class="phone">
+  <header class="header">
+    <button class="back-btn" id="backButton">
+      <i class="fa-solid fa-chevron-left"></i>
+      Back
+    </button>
+    <div class="header-right">
+      <div class="icon-btn" id="refreshButton" title="Refresh">
+        <i class="fa-solid fa-arrows-rotate"></i>
+      </div>
+      <div class="icon-btn" id="themeButton" title="Toggle Theme">
+        <i class="fa-solid fa-moon" id="themeIcon"></i>
+      </div>
+    </div>
+  </header>
+
+  <div class="content">
+    
+    <div class="hero-section">
+      <div class="hero-glow" id="heroGlow"></div>
+      <img src="assets/device_pics/1/controller/device101.png" alt="Device Model" class="hero-image" id="heroImage" draggable="false" oncontextmenu="return false;">
+      <div class="hero-image-shield" oncontextmenu="return false;"></div>
+    </div>
+
+    <div class="bottom-section">
+      <div class="device-card-header" id="deviceCard" style="padding-bottom: max(32px, calc(env(safe-area-inset-bottom, 0px) + 32px))">
+        <!-- Row 1: Label + Name + Action chips -->
+        <div class="device-meta-row">
+          <div class="device-meta-left">
+            <div class="device-name-wrap">
+              <div class="device-label-tag" id="deviceLabelTag">Smart Device</div>
+              <div class="device-name-text" id="deviceName">Loading...</div>
+              <div class="device-room-badge" id="deviceRoomBadge">
+                <span id="deviceRoomBadgeText"></span>
+              </div>
+            </div>
+          </div>
+          <div class="device-action-chips">
+            <div class="action-chip" id="renameBtn" title="Rename">
+              <i class="fa-solid fa-pen"></i>
+            </div>
+            <div class="action-chip room-chip" id="roomBtn" title="Room">
+              <i class="fa-solid fa-door-open"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Power toggle pill -->
+        <div class="power-toggle-wrap">
+          <div class="power-toggle-row" id="powerToggleRow">
+            <div class="power-toggle-labels">
+              <div class="power-toggle-title">Power</div>
+              <div class="power-status-text status-checking" id="statusMessage">Checking status...</div>
+            </div>
+            <div class="power-toggle-switch disabled" id="powerBtnTactile">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb">
+                <i class="fa-solid fa-power-off"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Feature chips -->
+        <div class="feature-cards-row">
+          <div class="feature-card timer-card" id="timerCard" onclick="openTimerSheet()">
+            <div class="feature-card-badge"></div>
+            <div id="timerCardIconSlot" class="feature-card-icon">
+              <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+            <span class="feature-card-label">Timer</span>
+          </div>
+          <div class="feature-card schedule-card" id="scheduleCard" onclick="openScheduleSheet()">
+            <div class="feature-card-badge"></div>
+            <i class="fa-solid fa-calendar-check feature-card-icon"></i>
+            <span class="feature-card-label">Schedule</span>
+          </div>
+          <div class="feature-card auto-card" id="autoCard" onclick="openAutomationSheet()">
+            <div class="feature-card-badge"></div>
+            <i class="fa-solid fa-bolt feature-card-icon"></i>
+            <span class="feature-card-label">Automate</span>
+          </div>
+        </div>
+
+        <!-- Row 4: Connection row -->
+        <div class="conn-row">
+          <div class="conn-left">
+            <div class="conn-dot" id="mqttDot"></div>
+            <div>
+              <div class="conn-text" id="connectionText">Connecting...</div>
+              <div class="conn-subtext">MQTT Server</div>
+            </div>
+          </div>
+          <div class="ping-badge" id="pingBadge">
+            <i class="fa-solid fa-signal"></i>
+            <span id="pingText">—</span>
+          </div>
+        </div>
+
+        <!-- Legacy hidden action row for JS compat -->
+        <div class="device-actions-row">
+          <div class="device-action-btn" id="_renameBtn2"></div>
+          <div class="device-action-btn primary" id="_roomBtn2"><span id="roomBtnText">Add to Room</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAllSheets()"></div>
+
+<div class="sheet" id="renameSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('renameSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Rename Device</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Custom Name</div>
+      <input type="text" class="sheet-input" id="renameInput" placeholder="e.g. Living Room Lamp" maxlength="32">
+    </div>
+    <button class="sheet-btn primary" id="renameSaveBtn" onclick="saveDeviceName()">Save Name</button>
+    <button class="sheet-btn secondary" style="margin-top: 8px;" onclick="closeSheet('renameSheet')">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet" id="roomSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('roomSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Assign to Room</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-cat">Current Room</div>
+    <div id="roomCurrentInfo" class="room-option selected" style="display:none;">
+      <div class="room-option-icon" id="roomCurrentEmoji">🏠</div>
+      <div class="room-option-name" id="roomCurrentName">—</div>
+      <div class="room-option-count"></div>
+      <i class="fa-solid fa-check room-option-check"></i>
+    </div>
+    <div class="sheet-cat">All Rooms</div>
+    <div id="roomOptionsList"></div>
+    <div style="height: 8px;"></div>
+  </div>
+  <div class="sheet-footer">
+    <button class="sheet-btn primary" onclick="openCreateRoomSheet()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Create New Room
+    </button>
+    <button class="sheet-btn danger" style="margin-top: 8px;" id="removeFromRoomBtn" onclick="removeFromRoom()">
+      <i class="fa-solid fa-door-closed" style="margin-right:6px;"></i> Remove from Room
+    </button>
+  </div>
+</div>
+
+<div class="sheet" id="createRoomSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="goBackToRoomSheet()"><i class="fa-solid fa-arrow-left"></i></div>
+      <div class="sheet-title">Create Room</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Room Name</div>
+      <input type="text" class="sheet-input" id="newRoomName" placeholder="e.g. Living Room" maxlength="24">
+    </div>
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Choose Icon</div>
+      <div class="sheet-input-emoji-row" id="emojiPicker">
+        </div>
+    </div>
+    <button class="sheet-btn primary" onclick="createRoom()">Create Room</button>
+    <button class="sheet-btn secondary" style="margin-top:8px;" onclick="goBackToRoomSheet()">Cancel</button>
+  </div>
+</div>
+
+<div class="sheet" id="manageRoomsSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('manageRoomsSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Manage Rooms</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div id="manageRoomsList"></div>
+    <button class="sheet-btn primary" style="margin-top:16px;" onclick="openCreateRoomFromManage()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i> Create New Room
+    </button>
+  </div>
+</div>
+
+<!-- ── Timer Sheet ── -->
+<div class="sheet" id="timerSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('timerSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Timer</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="timer-picker" id="timerDrumRow">
+      <div class="timer-picker-col-wrap">
+        <div class="timer-picker-col" id="drumHours"></div>
+        <div class="timer-picker-label">HH</div>
+      </div>
+      <div class="timer-picker-colon">:</div>
+      <div class="timer-picker-col-wrap">
+        <div class="timer-picker-col" id="drumMinutes"></div>
+        <div class="timer-picker-label">MM</div>
+      </div>
+      <div class="timer-picker-colon">:</div>
+      <div class="timer-picker-col-wrap">
+        <div class="timer-picker-col" id="drumSeconds"></div>
+        <div class="timer-picker-label">SS</div>
+      </div>
+    </div>
+    <!-- Hidden inputs for JS compat -->
+    <input type="hidden" id="timerHours" value="0">
+    <input type="hidden" id="timerMinutes" value="30">
+    <input type="hidden" id="timerSeconds" value="0">
+    <div class="sheet-cat">Action when timer ends</div>
+    <div class="timer-action-row">
+      <div class="timer-action-chip selected" id="timerActionOn" onclick="selectTimerAction('ON')">
+        <i class="fa-solid fa-power-off" style="margin-right:5px;"></i>Turn ON
+      </div>
+      <div class="timer-action-chip" id="timerActionOff" onclick="selectTimerAction('OFF')">
+        <i class="fa-solid fa-power-off" style="margin-right:5px;"></i>Turn OFF
+      </div>
+      <div class="timer-action-chip" id="timerActionToggle" onclick="selectTimerAction('TOGGLE')">
+        <i class="fa-solid fa-repeat" style="margin-right:5px;"></i>Toggle
+      </div>
+    </div>
+    <div class="sheet-cat">Quick Set</div>
+    <div class="timer-quick-row">
+      <div class="timer-quick-chip" onclick="setQuickTimer(0,5,0)">5 min</div>
+      <div class="timer-quick-chip" onclick="setQuickTimer(0,15,0)">15 min</div>
+      <div class="timer-quick-chip" onclick="setQuickTimer(0,30,0)">30 min</div>
+      <div class="timer-quick-chip" onclick="setQuickTimer(1,0,0)">1 hr</div>
+      <div class="timer-quick-chip" onclick="setQuickTimer(2,0,0)">2 hr</div>
+    </div>
+    <button class="sheet-btn primary" onclick="startTimer()">
+      <i class="fa-solid fa-play" style="margin-right:6px;"></i>Start Timer
+    </button>
+    <button class="sheet-btn secondary" style="margin-top:8px;" id="cancelTimerBtn" onclick="cancelTimer()">
+      <i class="fa-solid fa-stop" style="margin-right:6px;"></i>Cancel Timer
+    </button>
+  </div>
+</div>
+
+<!-- ── Schedule Sheet ── -->
+<div class="sheet" id="scheduleSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('scheduleSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Schedule</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-cat">Active Schedules</div>
+    <div id="scheduleList" class="schedule-list">
+      <div class="schedule-empty">
+        <i class="fa-regular fa-calendar"></i>
+        No schedules yet.<br>Add one below.
+      </div>
+    </div>
+    <div class="sheet-cat">Add New Schedule</div>
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Time</div>
+      <div class="time-input-row">
+        <input type="time" id="scheduleTime" value="07:00">
+      </div>
+    </div>
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Action</div>
+      <div class="timer-action-row" style="margin-bottom:0;">
+        <div class="timer-action-chip selected" id="schedActOn" onclick="selectSchedAction('ON')">
+          <i class="fa-solid fa-power-off" style="margin-right:5px;"></i>Turn ON
+        </div>
+        <div class="timer-action-chip" id="schedActOff" onclick="selectSchedAction('OFF')">
+          <i class="fa-solid fa-power-off" style="margin-right:5px;"></i>Turn OFF
+        </div>
+      </div>
+    </div>
+    <div class="sheet-input-wrap">
+      <div class="sheet-input-label">Repeat</div>
+      <div class="days-picker">
+        <div class="day-chip" data-day="M" onclick="toggleDay(this)">M</div>
+        <div class="day-chip" data-day="T" onclick="toggleDay(this)">T</div>
+        <div class="day-chip" data-day="W" onclick="toggleDay(this)">W</div>
+        <div class="day-chip" data-day="Th" onclick="toggleDay(this)">T</div>
+        <div class="day-chip" data-day="F" onclick="toggleDay(this)">F</div>
+        <div class="day-chip" data-day="Sa" onclick="toggleDay(this)">S</div>
+        <div class="day-chip" data-day="Su" onclick="toggleDay(this)">S</div>
+      </div>
+    </div>
+    <button class="sheet-btn primary" onclick="addSchedule()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i>Add Schedule
+    </button>
+  </div>
+</div>
+
+<!-- ── Automation Sheet ── -->
+<div class="sheet" id="automationSheet">
+  <div class="sheet-handle-area">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <div class="sheet-back" onclick="closeSheet('automationSheet')"><i class="fa-solid fa-xmark"></i></div>
+      <div class="sheet-title">Automation</div>
+    </div>
+  </div>
+  <div class="sheet-scroll">
+    <div class="sheet-cat">Active Automations</div>
+    <div id="automationList" class="automation-list">
+      <div class="automation-empty">
+        <i class="fa-solid fa-bolt"></i>
+        No automations yet.<br>Choose a trigger below.
+      </div>
+    </div>
+    <div class="sheet-cat">Choose Trigger</div>
+    <div class="trigger-option" id="trig-sunrise" onclick="selectTrigger('sunrise')">
+      <div class="trigger-option-icon"><i class="fa-solid fa-sun"></i></div>
+      <div class="trigger-option-body">
+        <div class="trigger-option-title">Sunrise</div>
+        <div class="trigger-option-sub">Turn ON at local sunrise</div>
+      </div>
+      <i class="fa-solid fa-check trigger-check"></i>
+    </div>
+    <div class="trigger-option" id="trig-sunset" onclick="selectTrigger('sunset')">
+      <div class="trigger-option-icon"><i class="fa-solid fa-moon"></i></div>
+      <div class="trigger-option-body">
+        <div class="trigger-option-title">Sunset</div>
+        <div class="trigger-option-sub">Turn ON at local sunset</div>
+      </div>
+      <i class="fa-solid fa-check trigger-check"></i>
+    </div>
+    <div class="trigger-option" id="trig-away" onclick="selectTrigger('away')">
+      <div class="trigger-option-icon"><i class="fa-solid fa-location-dot"></i></div>
+      <div class="trigger-option-body">
+        <div class="trigger-option-title">When Away</div>
+        <div class="trigger-option-sub">Turn OFF when you leave home</div>
+      </div>
+      <i class="fa-solid fa-check trigger-check"></i>
+    </div>
+    <div class="trigger-option" id="trig-arrive" onclick="selectTrigger('arrive')">
+      <div class="trigger-option-icon"><i class="fa-solid fa-house-circle-check"></i></div>
+      <div class="trigger-option-body">
+        <div class="trigger-option-title">When You Arrive</div>
+        <div class="trigger-option-sub">Turn ON when you get home</div>
+      </div>
+      <i class="fa-solid fa-check trigger-check"></i>
+    </div>
+    <div class="trigger-option" id="trig-power" onclick="selectTrigger('power')">
+      <div class="trigger-option-icon"><i class="fa-solid fa-plug-circle-bolt"></i></div>
+      <div class="trigger-option-body">
+        <div class="trigger-option-title">Power Threshold</div>
+        <div class="trigger-option-sub">Act when wattage exceeds a limit</div>
+      </div>
+      <i class="fa-solid fa-check trigger-check"></i>
+    </div>
+    <button class="sheet-btn primary" style="margin-top:8px;" onclick="addAutomation()">
+      <i class="fa-solid fa-plus" style="margin-right:6px;"></i>Add Automation
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let mqttClient = null;
+  let deviceId = null;
+  let currentUser = null;
+  let controlTopic = null;
+  let statusTopic = null;
+  let ofTopic = null;
+
+  let currentStatus = 'OFF';
+  let lastKnownStatus = null;
+  let isOnline = false;
+  let pendingCommand = null;
+  let pendingStartTime = null;
+
+  let deviceOnlineStatus = {};
+  let deviceTimeout = null;
+  let onlineCheckTimeout = null;
+  let statusTimeout = null;
+
+  // ── Room & Name Storage ──
+  const ROOMS_KEY = 'aada_rooms';
+  const DEVICE_ROOMS_KEY = 'aada_device_rooms';
+  const DEVICE_NAMES_KEY = 'aada_device_names';
+
+  const ROOM_EMOJIS = ['🏠','🛋️','🛏️','🍳','🚿','💼','🎮','📚','🌿','💡','🔌','🏋️','🎵','🌙','☀️','❄️'];
+  let selectedEmoji = '🏠';
+  let createRoomFromManage = false;
+
+  function getRooms() {
+    try { return JSON.parse(localStorage.getItem(ROOMS_KEY) || '[]'); } catch { return []; }
+  }
+  function saveRooms(rooms) {
+    localStorage.setItem(ROOMS_KEY, JSON.stringify(rooms));
+  }
+  function getDeviceRooms() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_ROOMS_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveDeviceRooms(dr) {
+    localStorage.setItem(DEVICE_ROOMS_KEY, JSON.stringify(dr));
+  }
+  function getDeviceNames() {
+    try { return JSON.parse(localStorage.getItem(DEVICE_NAMES_KEY) || '{}'); } catch { return {}; }
+  }
+  function saveDeviceNames(dn) {
+    localStorage.setItem(DEVICE_NAMES_KEY, JSON.stringify(dn));
+  }
+
+  function getDeviceName() {
+    const names = getDeviceNames();
+    return names[deviceId] || deviceId;
+  }
+  function getDeviceRoom() {
+    const dr = getDeviceRooms();
+    const rooms = getRooms();
+    const roomId = dr[deviceId];
+    if (!roomId) return null;
+    return rooms.find(r => r.id === roomId) || null;
+  }
+  function getDevicesInRoom(roomId) {
+    const dr = getDeviceRooms();
+    return Object.entries(dr).filter(([,rid]) => rid === roomId).map(([did]) => did);
+  }
+
+  // ── Theme ──
+  function loadTheme() {
+    const saved = localStorage.getItem('theme') || localStorage.getItem('appTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    localStorage.setItem('theme', saved);
+    localStorage.setItem('appTheme', saved);
+    updateThemeIcon(saved);
+  }
+
+  function updateThemeIcon(theme) {
+    const icon = document.getElementById('themeIcon');
+    if (theme === 'light') {
+      icon.className = 'fa-solid fa-moon';
+    } else {
+      icon.className = 'fa-solid fa-sun';
+    }
+  }
+
+  function performToggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    localStorage.setItem('appTheme', next); 
+    updateThemeIcon(next);
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme' || e.key === 'appTheme') {
+      const theme = e.newValue || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      updateThemeIcon(theme);
+    }
+  });
+
+  // ── UI helpers ──
+  function showToast(msg, type = 'default') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type === 'warn' ? ' toast-warn' : '');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  function openSheet(id) {
+    document.getElementById('overlay').classList.add('show');
+    document.getElementById(id).classList.add('show');
+  }
+  function closeSheet(id) {
+    document.getElementById(id).classList.remove('show');
+    if (!document.querySelector('.sheet.show')) {
+      document.getElementById('overlay').classList.remove('show');
+    }
+  }
+  function closeAllSheets() {
+    document.querySelectorAll('.sheet').forEach(s => s.classList.remove('show'));
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  // ── Rename ──
+  function openRenameSheet() {
+    const input = document.getElementById('renameInput');
+    input.value = getDeviceName() === deviceId ? '' : getDeviceName();
+    openSheet('renameSheet');
+    setTimeout(() => input.focus(), 300);
+  }
+  function saveDeviceName() {
+    const val = document.getElementById('renameInput').value.trim();
+    if (!val) { showToast('Please enter a name'); return; }
+    const names = getDeviceNames();
+    names[deviceId] = val;
+    saveDeviceNames(names);
+    updateDeviceDisplay();
+    closeSheet('renameSheet');
+    showToast('Device renamed');
+  }
+
+  // ── Room Sheet ──
+  function openRoomSheet() {
+    renderRoomOptions();
+    openSheet('roomSheet');
+  }
+
+  function renderRoomOptions() {
+    const rooms = getRooms();
+    const currentRoom = getDeviceRoom();
+    const list = document.getElementById('roomOptionsList');
+    const currentInfo = document.getElementById('roomCurrentInfo');
+    const removeBtn = document.getElementById('removeFromRoomBtn');
+
+    if (currentRoom) {
+      document.getElementById('roomCurrentEmoji').textContent = currentRoom.emoji || '🏠';
+      document.getElementById('roomCurrentName').textContent = currentRoom.name;
+      currentInfo.style.display = 'flex';
+      removeBtn.style.display = 'block';
+    } else {
+      currentInfo.style.display = 'none';
+      removeBtn.style.display = 'none';
+    }
+
+    if (rooms.length === 0) {
+      list.innerHTML = '<div class="empty-rooms"><i class="fa-solid fa-door-open"></i>No rooms yet.<br>Create one below.</div>';
+      return;
+    }
+
+    list.innerHTML = rooms.map(room => {
+      const count = getDevicesInRoom(room.id).length;
+      const isSelected = currentRoom && currentRoom.id === room.id;
+      return `<div class="room-option ${isSelected ? 'selected' : ''}" onclick="assignToRoom('${room.id}')">
+        <div class="room-option-icon">${room.emoji || '🏠'}</div>
+        <div class="room-option-name">${escapeHtml(room.name)}</div>
+        <div class="room-option-count">${count} device${count!==1?'s':''}</div>
+        <i class="fa-solid fa-check room-option-check"></i>
+      </div>`;
+    }).join('');
+  }
+
+  function assignToRoom(roomId) {
+    const dr = getDeviceRooms();
+    dr[deviceId] = roomId;
+    saveDeviceRooms(dr);
+    updateDeviceDisplay();
+    closeSheet('roomSheet');
+    const room = getRooms().find(r => r.id === roomId);
+    showToast(`Added to ${room ? room.name : 'room'}`);
+  }
+
+  function removeFromRoom() {
+    const dr = getDeviceRooms();
+    delete dr[deviceId];
+    saveDeviceRooms(dr);
+    updateDeviceDisplay();
+    closeSheet('roomSheet');
+    showToast('Removed from room');
+  }
+
+  // ── Create Room ──
+  function openCreateRoomSheet() {
+    createRoomFromManage = false;
+    document.getElementById('newRoomName').value = '';
+    selectedEmoji = '🏠';
+    renderEmojiPicker();
+    closeSheet('roomSheet');
+    openSheet('createRoomSheet');
+    setTimeout(() => document.getElementById('newRoomName').focus(), 300);
+  }
+
+  function openCreateRoomFromManage() {
+    createRoomFromManage = true;
+    document.getElementById('newRoomName').value = '';
+    selectedEmoji = '🏠';
+    renderEmojiPicker();
+    closeSheet('manageRoomsSheet');
+    openSheet('createRoomSheet');
+    setTimeout(() => document.getElementById('newRoomName').focus(), 300);
+  }
+
+  function goBackToRoomSheet() {
+    closeSheet('createRoomSheet');
+    if (createRoomFromManage) {
+      openSheet('manageRoomsSheet');
+      renderManageRooms();
+    } else {
+      openSheet('roomSheet');
+      renderRoomOptions();
+    }
+  }
+
+  function renderEmojiPicker() {
+    const picker = document.getElementById('emojiPicker');
+    picker.innerHTML = ROOM_EMOJIS.map(e =>
+      `<div class="emoji-btn ${e === selectedEmoji ? 'selected' : ''}" onclick="selectEmoji('${e}')">${e}</div>`
+    ).join('');
+  }
+
+  function selectEmoji(e) {
+    selectedEmoji = e;
+    renderEmojiPicker();
+  }
+
+  function createRoom() {
+    const name = document.getElementById('newRoomName').value.trim();
+    if (!name) { showToast('Please enter a room name'); return; }
+    const rooms = getRooms();
+    if (rooms.find(r => r.name.toLowerCase() === name.toLowerCase())) {
+      showToast('Room already exists'); return;
+    }
+    const room = { id: 'room_' + Date.now(), name, emoji: selectedEmoji };
+    rooms.push(room);
+    saveRooms(rooms);
+
+    if (!createRoomFromManage) {
+      const dr = getDeviceRooms();
+      dr[deviceId] = room.id;
+      saveDeviceRooms(dr);
+    }
+
+    updateDeviceDisplay();
+    closeSheet('createRoomSheet');
+    showToast(`Room "${name}" created`);
+  }
+
+  // ── Manage Rooms ──
+  function openManageRooms() {
+    renderManageRooms();
+    openSheet('manageRoomsSheet');
+  }
+
+  function renderManageRooms() {
+    const rooms = getRooms();
+    const list = document.getElementById('manageRoomsList');
+    if (rooms.length === 0) {
+      list.innerHTML = '<div class="empty-rooms"><i class="fa-solid fa-door-open"></i>No rooms yet.</div>';
+      return;
+    }
+    list.innerHTML = rooms.map(room => {
+      const count = getDevicesInRoom(room.id).length;
+      return `<div class="sheet-item" style="margin-bottom:8px;">
+        <div class="item-icon">${room.emoji || '🏠'}</div>
+        <div class="item-body">
+          <div class="item-title">${escapeHtml(room.name)}</div>
+          <div class="item-sub">${count} device${count!==1?'s':''}</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="icon-btn" style="width:34px;height:34px;font-size:13px;" onclick="editRoomPrompt('${room.id}')"><i class="fa-solid fa-pen"></i></div>
+          <div class="icon-btn" style="width:34px;height:34px;font-size:13px;color:var(--danger);" onclick="deleteRoom('${room.id}')"><i class="fa-solid fa-trash"></i></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function editRoomPrompt(roomId) {
+    const rooms = getRooms();
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+    const name = prompt('Rename room:', room.name);
+    if (!name || !name.trim()) return;
+    room.name = name.trim();
+    saveRooms(rooms);
+    renderManageRooms();
+    updateDeviceDisplay();
+    showToast('Room renamed');
+  }
+
+  function deleteRoom(roomId) {
+    if (!confirm('Delete this room? Devices will be unassigned.')) return;
+    let rooms = getRooms();
+    rooms = rooms.filter(r => r.id !== roomId);
+    saveRooms(rooms);
+    const dr = getDeviceRooms();
+    Object.keys(dr).forEach(did => { if (dr[did] === roomId) delete dr[did]; });
+    saveDeviceRooms(dr);
+    renderManageRooms();
+    updateDeviceDisplay();
+    showToast('Room deleted');
+  }
+
+  function updateDeviceDisplay() {
+    const name = getDeviceName();
+    const room = getDeviceRoom();
+
+    document.getElementById('deviceName').textContent = name;
+    document.getElementById('deviceLabelTag').textContent = deviceId;
+
+    // Room badge under device name
+    const badge = document.getElementById('deviceRoomBadge');
+    const badgeText = document.getElementById('deviceRoomBadgeText');
+    if (room) {
+      badgeText.textContent = (room.emoji ? room.emoji + ' ' : '') + room.name;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    // Legacy hidden span for other JS
+    const roomBtnTextEl = document.getElementById('roomBtnText');
+    if (roomBtnTextEl) roomBtnTextEl.textContent = room ? room.name : 'Add to Room';
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  // ── Haptic ──
+  function shouldHapticController() { return localStorage.getItem('hapticsController') === 'true'; }
+  function shouldHapticAll() { return localStorage.getItem('hapticsAll') === 'true'; }
+  function getHapticIntensity() { const s = localStorage.getItem('hapticsIntensity'); return s ? parseInt(s) : 50; }
+  function hapticFeedback(d) { if ('vibrate' in navigator && d > 0) navigator.vibrate(d); }
+  function withHaptic(fn) {
+    return function(event) {
+      const id = event.currentTarget.id;
+      if (shouldHapticAll() || (shouldHapticController() && id === 'powerBtnTactile')) hapticFeedback(getHapticIntensity());
+      if (fn) fn(event);
+    };
+  }
+
+  // ── Init ──
+  function init() {
+    loadTheme();
+
+    deviceId = sessionStorage.getItem('active_device');
+    if (!deviceId) { alert('No device selected'); window.location.href = 'dashboard.html'; return; }
+
+    const userStr = sessionStorage.getItem('current_user');
+    if (!userStr) { alert('Not logged in'); window.location.href = 'login.html'; return; }
+
+    try { currentUser = JSON.parse(userStr); }
+    catch { alert('Session error'); window.location.href = 'login.html'; return; }
+
+    controlTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/control`;
+    statusTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/status`;
+    ofTopic = `smartplug/${currentUser.hashed_email}/${currentUser.hashed_password}/${deviceId}/OF`;
+
+    updateDeviceDisplay();
+
+    try {
+      const cachedStatus = sessionStorage.getItem('device_status_cache');
+      if (cachedStatus) {
+        const cache = JSON.parse(cachedStatus);
+        if (cache && typeof cache === 'object') {
+          const cacheAge = Date.now() - (cache.timestamp || 0);
+          if (cacheAge < 10000 && cache.status && typeof cache.status === 'string') {
+            const validStatuses = ['ON', 'OFF', 'offline'];
+            const norm = cache.status.toUpperCase();
+            if (validStatuses.includes(norm) || validStatuses.includes(cache.status)) {
+              if (cache.status === 'offline') {
+                lastKnownStatus = null; isOnline = false;
+                deviceOnlineStatus[deviceId] = 'offline'; goOffline();
+              } else if (norm === 'ON' || norm === 'OFF') {
+                currentStatus = norm; lastKnownStatus = norm;
+                isOnline = cache.isOnline === true;
+                deviceOnlineStatus[deviceId] = norm;
+                if (norm === 'ON') applyPowerState('ON');
+                else applyPowerState('OFF');
+              }
+            }
+          }
+        }
+        sessionStorage.removeItem('device_status_cache');
+      }
+    } catch(e) { sessionStorage.removeItem('device_status_cache'); }
+
+    connectMQTT();
+  }
+
+  // Sync the new status pill UI from statusMessage class
+  function syncStatusPill() {
+    // no-op: pill removed, status-text is now visible inline
+  }
+
+  function setToggleState(state) {
+    // state: 'on' | 'off' | 'pending' | 'offline'
+    const sw = document.getElementById('powerBtnTactile');
+    const card = document.getElementById('deviceCard');
+    const row = document.getElementById('powerToggleRow');
+    if (!sw) return;
+    sw.classList.remove('toggle-on', 'toggle-pending', 'disabled');
+    card && card.classList.remove('card-on');
+    row && row.classList.remove('row-on');
+    if (state === 'on') {
+      sw.classList.add('toggle-on');
+      card && card.classList.add('card-on');
+      row && row.classList.add('row-on');
+    } else if (state === 'pending') {
+      sw.classList.add('toggle-pending');
+    } else if (state === 'offline') {
+      sw.classList.add('disabled');
+    }
+  }
+
+  function applyPowerState(state) {
+    const btn = document.getElementById('powerBtnTactile');
+    const msg = document.getElementById('statusMessage');
+    const glow = document.getElementById('heroGlow');
+    const fade = document.getElementById('statusTopFade');
+
+    if (state === 'ON') {
+      btn.className = 'power-toggle-switch toggle-on';
+      glow.className = 'hero-glow power-on';
+      msg.textContent = 'Device is ON';
+      msg.className = 'power-status-text status-on';
+      if (fade) fade.className = 'status-top-fade fade-on';
+      document.getElementById('deviceCard') && document.getElementById('deviceCard').classList.add('card-on');
+      document.getElementById('powerToggleRow') && document.getElementById('powerToggleRow').classList.add('row-on');
+      document.getElementById('deviceIconWrap') && (document.getElementById('deviceIconWrap').style.cssText = '');
+    } else if (state === 'OFF') {
+      btn.className = 'power-toggle-switch';
+      glow.className = 'hero-glow power-off';
+      msg.textContent = 'Device is OFF';
+      msg.className = 'power-status-text status-off';
+      if (fade) fade.className = 'status-top-fade fade-off';
+      document.getElementById('deviceCard') && document.getElementById('deviceCard').classList.remove('card-on');
+      document.getElementById('powerToggleRow') && document.getElementById('powerToggleRow').classList.remove('row-on');
+    }
+    syncStatusPill();
+  }
+
+  // ── MQTT ──
+  function connectMQTT() {
+    try {
+      mqttClient = mqtt.connect('wss://y1dda1f8.ala.asia-southeast1.emqxsl.com:8084/mqtt', {
+        username: 'AADAconnect', password: 'wMhtXcU86UtV-48'
+      });
+      mqttClient.on('connect', () => {
+        updateConnectionStatus(true);
+        mqttClient.subscribe(statusTopic);
+        mqttClient.subscribe(ofTopic, () => { checkDeviceStatus(); });
+      });
+      mqttClient.on('message', (topic, message) => handleMQTTMessage(topic, message));
+      const onErr = () => updateConnectionStatus(false);
+      mqttClient.on('error', onErr);
+      mqttClient.on('close', onErr);
+    } catch(e) { updateConnectionStatus(false); }
+  }
+
+  function updateConnectionStatus(connected) {
+    const dot = document.getElementById('mqttDot');
+    const text = document.getElementById('connectionText');
+    if (connected) {
+      dot.className = 'conn-dot connected';
+      text.textContent = 'Connected';
+      startPingPolling();
+    } else {
+      dot.className = 'conn-dot';
+      text.textContent = 'Disconnected';
+      stopPingPolling();
+      updatePingBadge(null);
+    }
+  }
+
+  // ── Ping ──
+  let pingInterval = null;
+  let pingStartTime = null;
+
+  function startPingPolling() {
+    if (pingInterval) return;
+    measurePing();
+    pingInterval = setInterval(measurePing, 8000);
+  }
+
+  function stopPingPolling() {
+    if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
+  }
+
+  function measurePing() {
+    if (!mqttClient || !mqttClient.connected) return;
+    pingStartTime = Date.now();
+    try {
+      mqttClient.publish('aada/ping', 'ping', {}, (err) => {
+        if (!err && pingStartTime) {
+          const latency = Date.now() - pingStartTime;
+          updatePingBadge(latency);
+          pingStartTime = null;
+        } else {
+          updatePingBadge(null);
+          pingStartTime = null;
+        }
+      });
+    } catch(e) { updatePingBadge(null); }
+  }
+
+  function updatePingBadge(ms) {
+    const badge = document.getElementById('pingBadge');
+    const text = document.getElementById('pingText');
+    if (ms === null) {
+      badge.className = 'ping-badge ping-fail';
+      text.textContent = '—';
+      return;
+    }
+    text.textContent = ms + ' ms';
+    if (ms < 120) {
+      badge.className = 'ping-badge ping-good';
+    } else if (ms < 350) {
+      badge.className = 'ping-badge ping-slow';
+    } else {
+      badge.className = 'ping-badge ping-fail';
+    }
+  }
+
+  function handleMQTTMessage(topic, message) {
+    const parts = topic.split('/');
+    const last = parts[parts.length - 1];
+
+    if (last === 'OF') {
+      const raw = message.toString().trim();
+      const lower = raw.toLowerCase();
+      if (lower === 'check_status') return;
+      if (deviceTimeout) { clearTimeout(deviceTimeout); deviceTimeout = null; }
+      if (onlineCheckTimeout) { clearTimeout(onlineCheckTimeout); onlineCheckTimeout = null; }
+      if (lower === 'offline') { deviceOnlineStatus[deviceId] = 'offline'; goOffline(); return; }
+      deviceOnlineStatus[deviceId] = raw; isOnline = true;
+      const msg = document.getElementById('statusMessage');
+      if (!pendingCommand) {
+        if (currentStatus === 'ON') applyPowerState('ON');
+        else if (currentStatus === 'OFF') applyPowerState('OFF');
+        else { msg.textContent = 'Online'; msg.className = 'power-status-text status-pending'; syncStatusPill(); }
+      }
+    }
+
+    if (last === 'status') {
+      const s = message.toString().trim().toUpperCase();
+      handleStatusUpdate(s);
+    }
+  }
+
+  function checkDeviceStatus(manualRefresh = false) {
+    const hadValid = deviceOnlineStatus[deviceId] === 'ON' || deviceOnlineStatus[deviceId] === 'OFF';
+    const alreadyOffline = !manualRefresh && (deviceOnlineStatus[deviceId] === 'offline' || !isOnline);
+    deviceOnlineStatus[deviceId] = 'Checking...';
+
+    const msg = document.getElementById('statusMessage');
+    const btn = document.getElementById('powerBtnTactile');
+    const glow = document.getElementById('heroGlow');
+
+    if (!pendingCommand && !hadValid && !alreadyOffline) {
+      msg.textContent = 'Checking device status...';
+      msg.className = 'power-status-text status-checking';
+      btn.className = 'power-toggle-switch disabled';
+      glow.className = 'hero-glow';
+      syncStatusPill();
+    }
+
+    mqttClient.publish(ofTopic, 'check_status');
+
+    onlineCheckTimeout = setTimeout(() => {
+      if (deviceOnlineStatus[deviceId] === 'Checking...') {
+        deviceOnlineStatus[deviceId] = 'offline'; goOffline();
+      }
+    }, 5000);
+  }
+
+  function showPendingState(command) {
+    const btn = document.getElementById('powerBtnTactile');
+    const msg = document.getElementById('statusMessage');
+    const glow = document.getElementById('heroGlow');
+
+    btn.className = 'power-toggle-switch toggle-pending';
+    glow.className = 'hero-glow power-pending';
+    msg.textContent = `Turning ${command === '1' ? 'ON' : 'OFF'}...`;
+    msg.className = 'power-status-text status-pending';
+    pendingStartTime = Date.now();
+    syncStatusPill();
+  }
+
+  function hidePendingState(success = true) {
+    // pending state is resolved by applyPowerState/goOffline setting the correct class
+    pendingCommand = null; pendingStartTime = null;
+  }
+
+  function handleStatusUpdate(status) {
+    if (onlineCheckTimeout) { clearTimeout(onlineCheckTimeout); onlineCheckTimeout = null; }
+    if (statusTimeout) { clearTimeout(statusTimeout); statusTimeout = null; }
+
+    const lower = status.toLowerCase();
+    if (lower === 'offline') { goOffline(); return; }
+
+    if (status === 'ON' || status === 'OFF') {
+      isOnline = true;
+      if (deviceOnlineStatus[deviceId] === 'Checking...' || deviceOnlineStatus[deviceId] === 'offline') {
+        deviceOnlineStatus[deviceId] = status;
+      }
+      const wasConfirmed = pendingCommand !== null &&
+        ((pendingCommand === '1' && status === 'ON') || (pendingCommand === '0' && status === 'OFF'));
+      if (wasConfirmed) {
+        hidePendingState(true);
+        if (shouldHapticController() || shouldHapticAll()) hapticFeedback(getHapticIntensity());
+      }
+      currentStatus = status; lastKnownStatus = status;
+      applyPowerState(status);
+    } else { goOffline(); }
+  }
+
+  function goOffline() {
+    isOnline = false; deviceOnlineStatus[deviceId] = 'offline';
+    hidePendingState(false);
+    const btn = document.getElementById('powerBtnTactile');
+    const msg = document.getElementById('statusMessage');
+    const glow = document.getElementById('heroGlow');
+    const fade = document.getElementById('statusTopFade');
+
+    btn.className = 'power-toggle-switch disabled';
+    glow.className = 'hero-glow power-offline';
+    if (fade) fade.className = 'status-top-fade fade-offline';
+    document.getElementById('deviceCard') && document.getElementById('deviceCard').classList.remove('card-on');
+
+    if (lastKnownStatus === 'ON') { msg.textContent = 'Last known: ON (offline)'; }
+    else if (lastKnownStatus === 'OFF') { msg.textContent = 'Last known: OFF (offline)'; }
+    else { msg.textContent = 'Device is offline'; }
+    msg.className = 'power-status-text status-offline';
+    syncStatusPill();
+  }
+
+  function performTogglePower() {
+    if (!mqttClient || !mqttClient.connected) {
+      showToast('Not connected to server', 'warn');
+      const btn = document.getElementById('powerBtnTactile');
+      btn.classList.remove('shake');
+      void btn.offsetWidth; // reflow to restart animation
+      btn.classList.add('shake');
+      setTimeout(() => btn.classList.remove('shake'), 400);
+      return;
+    }
+    if (!isOnline) {
+      showToast('Device is offline', 'warn');
+      const btn = document.getElementById('powerBtnTactile');
+      btn.classList.remove('shake');
+      void btn.offsetWidth;
+      btn.classList.add('shake');
+      setTimeout(() => btn.classList.remove('shake'), 400);
+      return;
+    }
+    if (pendingCommand !== null) return;
+    const command = currentStatus === 'ON' ? '0' : '1';
+    pendingCommand = command;
+    showPendingState(command);
+    mqttClient.publish(controlTopic, command);
+    if (statusTimeout) clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => { goOffline(); }, 5000);
+  }
+
+  function performRefresh() {
+    if (!mqttClient || !mqttClient.connected) { alert('Not connected to server'); return; }
+    const btn = document.getElementById('refreshButton');
+    btn.style.transform = 'rotate(360deg)';
+    btn.style.transition = 'transform 0.5s ease';
+    setTimeout(() => { btn.style.transform = ''; btn.style.transition = ''; }, 500);
+    checkDeviceStatus(true);
+  }
+
+  function performGoBack() { window.location.href = 'dashboard.html'; }
+
+  // ── Boot ──
+  window.onload = function() {
+    init();
+    renderEmojiPicker();
+
+    document.getElementById('powerBtnTactile').addEventListener('click', withHaptic(performTogglePower));
+    document.getElementById('backButton').addEventListener('click', withHaptic(performGoBack));
+    document.getElementById('refreshButton').addEventListener('click', withHaptic(performRefresh));
+    document.getElementById('themeButton').addEventListener('click', withHaptic(performToggleTheme));
+    document.getElementById('renameBtn').addEventListener('click', openRenameSheet);
+    document.getElementById('roomBtn').addEventListener('click', openRoomSheet);
+    document.getElementById('deviceRoomBadge').addEventListener('click', openRoomSheet);
+  };
+
+  // ── Timer ──
+  let timerSelectedAction = 'ON';
+  let activeTimer = null;
+  let timerEndTime = null;
+
+  function openTimerSheet() { openSheet('timerSheet'); initDrumPickers(); }
+
+  // ── Drum Picker ──
+  let drumInitialized = false;
+
+  function drumHaptic() {
+    if ('vibrate' in navigator) navigator.vibrate(8);
+  }
+
+  function buildDrumCol(colEl, count, initialVal) {
+    colEl.innerHTML = '';
+    const ITEM_H = 64;
+    const topSpacer = document.createElement('div');
+    topSpacer.className = 'timer-picker-spacer';
+    colEl.appendChild(topSpacer);
+    for (let i = 0; i < count; i++) {
+      const item = document.createElement('div');
+      item.className = 'timer-picker-item';
+      item.textContent = String(i).padStart(2, '0');
+      colEl.appendChild(item);
+    }
+    const botSpacer = document.createElement('div');
+    botSpacer.className = 'timer-picker-spacer';
+    colEl.appendChild(botSpacer);
+    // Scroll to initial value — defer so layout is painted
+    requestAnimationFrame(() => {
+      colEl.scrollTop = initialVal * ITEM_H;
+    });
+  }
+
+  function attachDrumScroll(colEl, inputId, max) {
+    const ITEM_H = 64;
+    let lastSnapped = -1;
+    let scrollTimer = null;
+    let tapping = false;
+
+    colEl.addEventListener('scroll', () => {
+      const snapped = Math.round(colEl.scrollTop / ITEM_H);
+      const val = Math.max(0, Math.min(snapped, max - 1));
+
+      if (val !== lastSnapped) {
+        lastSnapped = val;
+        drumHaptic();
+        document.getElementById(inputId).value = val;
+        updateTimerPreview();
+      }
+
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        colEl.scrollTo({ top: val * ITEM_H, behavior: 'smooth' });
+      }, 80);
+    }, { passive: true });
+
+    // Tap-to-edit: detect tap on the centred (selected) item
+    colEl.addEventListener('click', (e) => {
+      if (tapping) return;
+      const snapped = Math.round(colEl.scrollTop / ITEM_H);
+      const clickedItem = e.target.closest('.timer-picker-item');
+      if (!clickedItem) return;
+
+      // Only respond if tapping the currently selected (centred) item
+      const items = colEl.querySelectorAll('.timer-picker-item');
+      const clickedIdx = Array.from(items).indexOf(clickedItem);
+      if (clickedIdx !== snapped) {
+        // Scroll to the tapped item instead
+        colEl.scrollTo({ top: clickedIdx * ITEM_H, behavior: 'smooth' });
+        return;
+      }
+
+      tapping = true;
+      const wrap = colEl.closest('.timer-picker-col-wrap');
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.inputMode = 'numeric';
+      inp.min = 0;
+      inp.max = max - 1;
+      inp.value = snapped;
+      inp.className = 'drum-tap-input';
+      inp.setAttribute('autocomplete', 'off');
+      wrap.appendChild(inp);
+
+      // Select all on focus so user types over existing value
+      inp.focus();
+      inp.select();
+
+      function commit() {
+        let val = parseInt(inp.value);
+        if (isNaN(val)) val = snapped;
+        val = Math.max(0, Math.min(val, max - 1));
+        document.getElementById(inputId).value = val;
+        updateTimerPreview();
+        lastSnapped = val;
+        drumHaptic();
+        inp.remove();
+        tapping = false;
+        // Scroll drum to match
+        requestAnimationFrame(() => {
+          colEl.scrollTo({ top: val * ITEM_H, behavior: 'smooth' });
+        });
+      }
+
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit();
+          // Move focus to next drum column (hours → minutes → seconds)
+          const colOrder = ['drumHours', 'drumMinutes', 'drumSeconds'];
+          const currentColId = colEl.id;
+          const currentIdx = colOrder.indexOf(currentColId);
+          if (currentIdx !== -1 && currentIdx < colOrder.length - 1) {
+            const nextCol = document.getElementById(colOrder[currentIdx + 1]);
+            if (nextCol) {
+              // Simulate a click on the centered item of the next column
+              setTimeout(() => {
+                const ITEM_H = 64;
+                const snappedNext = Math.round(nextCol.scrollTop / ITEM_H);
+                const items = nextCol.querySelectorAll('.timer-picker-item');
+                if (items[snappedNext]) items[snappedNext].click();
+              }, 50);
+            }
+          }
+        }
+        if (e.key === 'Escape') { inp.remove(); tapping = false; }
+      });
+      inp.addEventListener('blur', () => {
+        // Small delay so Enter keydown fires first
+        setTimeout(() => { if (tapping) commit(); }, 100);
+      });
+      // Stop scroll events from propagating through the input
+      inp.addEventListener('wheel', e => e.stopPropagation(), { passive: false });
+    });
+  }
+
+  function initDrumPickers() {
+    if (drumInitialized) return;
+    drumInitialized = true;
+    const h = parseInt(document.getElementById('timerHours').value)   || 0;
+    const m = parseInt(document.getElementById('timerMinutes').value) || 30;
+    const s = parseInt(document.getElementById('timerSeconds').value) || 0;
+    buildDrumCol(document.getElementById('drumHours'),   24, h);
+    buildDrumCol(document.getElementById('drumMinutes'), 60, m);
+    buildDrumCol(document.getElementById('drumSeconds'), 60, s);
+    attachDrumScroll(document.getElementById('drumHours'),   'timerHours',   24);
+    attachDrumScroll(document.getElementById('drumMinutes'), 'timerMinutes', 60);
+    attachDrumScroll(document.getElementById('drumSeconds'), 'timerSeconds', 60);
+  }
+
+  function updateTimerPreview() {
+    // No separate preview element — the drum IS the display
+  }
+
+  function setQuickTimer(h, m, s) {
+    document.getElementById('timerHours').value   = h;
+    document.getElementById('timerMinutes').value = m;
+    document.getElementById('timerSeconds').value = s;
+    drumInitialized = false;
+    initDrumPickers();
+  }
+
+  function selectTimerAction(action) {
+    timerSelectedAction = action;
+    ['ON','OFF','TOGGLE'].forEach(a => {
+      document.getElementById('timerAction' + (a === 'ON' ? 'On' : a === 'OFF' ? 'Off' : 'Toggle')).classList.toggle('selected', a === action);
+    });
+  }
+
+  function startTimer() {
+    const h = parseInt(document.getElementById('timerHours').value) || 0;
+    const m = parseInt(document.getElementById('timerMinutes').value) || 0;
+    const s = parseInt(document.getElementById('timerSeconds').value) || 0;
+    const total = h * 3600 + m * 60 + s;
+    if (total <= 0) { showToast('Set a duration first'); return; }
+    if (activeTimer) clearTimeout(activeTimer);
+    timerDurationSec = total;
+    timerEndTime = Date.now() + total * 1000;
+    activeTimer = setTimeout(() => {
+      activeTimer = null;
+      timerEndTime = null;
+      timerDurationSec = 0;
+      hideTimerCapsule();
+      document.getElementById('timerCard').classList.remove('active-feature');
+      showToast(`Timer ended — action: ${timerSelectedAction}`);
+    }, total * 1000);
+    document.getElementById('timerCard').classList.add('active-feature');
+    const label = `${h > 0 ? h + 'h ' : ''}${m > 0 ? m + 'm ' : ''}${s > 0 ? s + 's' : ''}`.trim();
+    showToast(`Timer set for ${label}`);
+    showTimerCapsule();
+    closeSheet('timerSheet');
+  }
+
+  function cancelTimer() {
+    if (activeTimer) { clearTimeout(activeTimer); activeTimer = null; }
+    timerEndTime = null;
+    timerDurationSec = 0;
+    hideTimerCapsule();
+    document.getElementById('timerCard').classList.remove('active-feature');
+    showToast('Timer cancelled');
+    closeSheet('timerSheet');
+  }
+
+  // ── Schedule ──
+  let schedules = [];
+  let schedSelectedAction = 'ON';
+  let selectedDays = new Set();
+
+  function openScheduleSheet() {
+    renderScheduleList();
+    openSheet('scheduleSheet');
+  }
+
+  function selectSchedAction(action) {
+    schedSelectedAction = action;
+    document.getElementById('schedActOn').classList.toggle('selected', action === 'ON');
+    document.getElementById('schedActOff').classList.toggle('selected', action === 'OFF');
+  }
+
+  function toggleDay(el) {
+    const d = el.dataset.day;
+    if (selectedDays.has(d)) { selectedDays.delete(d); el.classList.remove('selected'); }
+    else { selectedDays.add(d); el.classList.add('selected'); }
+  }
+
+  function addSchedule() {
+    const time = document.getElementById('scheduleTime').value;
+    if (!time) { showToast('Set a time first'); return; }
+    const days = selectedDays.size > 0 ? [...selectedDays].join(', ') : 'Once';
+    schedules.push({ id: Date.now(), time, action: schedSelectedAction, days, enabled: true });
+    renderScheduleList();
+    document.getElementById('scheduleCard').classList.add('active-feature');
+    showToast('Schedule added');
+  }
+
+  function renderScheduleList() {
+    const list = document.getElementById('scheduleList');
+    if (schedules.length === 0) {
+      list.innerHTML = '<div class="schedule-empty"><i class="fa-regular fa-calendar"></i>No schedules yet.<br>Add one below.</div>';
+      document.getElementById('scheduleCard').classList.remove('active-feature');
+      return;
+    }
+    list.innerHTML = schedules.map((sc, i) => `
+      <div class="schedule-item">
+        <div class="schedule-item-time">${sc.time}</div>
+        <div class="schedule-item-body">
+          <span class="schedule-item-action ${sc.action === 'ON' ? 'on' : 'off'}">${sc.action}</span>
+          <div class="schedule-item-days">${sc.days}</div>
+        </div>
+        <div class="schedule-toggle ${sc.enabled ? 'enabled' : ''}" onclick="toggleSchedule(${i})"></div>
+        <div class="icon-btn" style="width:32px;height:32px;font-size:12px;color:var(--danger);" onclick="deleteSchedule(${i})"><i class="fa-solid fa-trash"></i></div>
+      </div>`).join('');
+  }
+
+  function toggleSchedule(i) {
+    schedules[i].enabled = !schedules[i].enabled;
+    const hasActive = schedules.some(s => s.enabled);
+    document.getElementById('scheduleCard').classList.toggle('active-feature', hasActive);
+    renderScheduleList();
+  }
+
+  function deleteSchedule(i) {
+    schedules.splice(i, 1);
+    renderScheduleList();
+    if (schedules.length === 0) document.getElementById('scheduleCard').classList.remove('active-feature');
+    showToast('Schedule removed');
+  }
+
+  // ── Automation ──
+  let automations = [];
+  let selectedTrigger = null;
+
+  const TRIGGER_META = {
+    sunrise:  { icon: 'fa-solid fa-sun',               label: 'Sunrise',          sub: 'Turns ON at local sunrise' },
+    sunset:   { icon: 'fa-solid fa-moon',              label: 'Sunset',           sub: 'Turns ON at local sunset' },
+    away:     { icon: 'fa-solid fa-location-dot',      label: 'When Away',        sub: 'Turns OFF when you leave' },
+    arrive:   { icon: 'fa-solid fa-house-circle-check',label: 'When You Arrive',  sub: 'Turns ON when you arrive' },
+    power:    { icon: 'fa-solid fa-plug-circle-bolt',  label: 'Power Threshold',  sub: 'Acts on wattage limit' },
+  };
+
+  function openAutomationSheet() {
+    renderAutomationList();
+    openSheet('automationSheet');
+  }
+
+  function selectTrigger(t) {
+    selectedTrigger = selectedTrigger === t ? null : t;
+    Object.keys(TRIGGER_META).forEach(k => {
+      document.getElementById('trig-' + k).classList.toggle('selected', k === selectedTrigger);
+    });
+  }
+
+  function addAutomation() {
+    if (!selectedTrigger) { showToast('Select a trigger first'); return; }
+    const meta = TRIGGER_META[selectedTrigger];
+    automations.push({ id: Date.now(), trigger: selectedTrigger, ...meta, enabled: true });
+    selectedTrigger = null;
+    Object.keys(TRIGGER_META).forEach(k => document.getElementById('trig-' + k).classList.remove('selected'));
+    renderAutomationList();
+    document.getElementById('autoCard').classList.add('active-feature');
+    showToast('Automation added');
+  }
+
+  function renderAutomationList() {
+    const list = document.getElementById('automationList');
+    if (automations.length === 0) {
+      list.innerHTML = '<div class="automation-empty"><i class="fa-solid fa-bolt"></i>No automations yet.<br>Choose a trigger below.</div>';
+      document.getElementById('autoCard').classList.remove('active-feature');
+      return;
+    }
+    list.innerHTML = automations.map((a, i) => `
+      <div class="automation-item">
+        <div class="automation-item-icon"><i class="${a.icon}"></i></div>
+        <div class="automation-item-body">
+          <div class="automation-item-title">${a.label}</div>
+          <div class="automation-item-sub">${a.sub}</div>
+        </div>
+        <div class="schedule-toggle ${a.enabled ? 'enabled' : ''}" onclick="toggleAutomation(${i})"></div>
+        <div class="icon-btn" style="width:32px;height:32px;font-size:12px;color:var(--danger);margin-left:4px;" onclick="deleteAutomation(${i})"><i class="fa-solid fa-trash"></i></div>
+      </div>`).join('');
+  }
+
+  function toggleAutomation(i) {
+    automations[i].enabled = !automations[i].enabled;
+    const hasActive = automations.some(a => a.enabled);
+    document.getElementById('autoCard').classList.toggle('active-feature', hasActive);
+    renderAutomationList();
+  }
+
+  function deleteAutomation(i) {
+    automations.splice(i, 1);
+    renderAutomationList();
+    if (automations.length === 0) document.getElementById('autoCard').classList.remove('active-feature');
+    showToast('Automation removed');
+  }
+
+  // ── Timer Card Capsule ──
+  let timerCapsuleRAF = null;
+  let timerDurationSec = 0;
+
+  function formatCountdown(totalSec) {
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+
+  function showTimerCapsule() {
+    const slot = document.getElementById('timerCardIconSlot');
+    if (!slot) return;
+    slot.classList.add('capsule-active');
+    slot.innerHTML = `
+      <div class="timer-card-capsule">
+        <div class="timer-capsule-time" id="timerCapsuleTime">--:--</div>
+        <div class="timer-capsule-bar-wrap">
+          <div class="timer-capsule-bar" id="timerCapsuleBar" style="width:100%"></div>
+        </div>
+      </div>`;
+    tickTimerCapsule();
+  }
+
+  function hideTimerCapsule() {
+    if (timerCapsuleRAF) { cancelAnimationFrame(timerCapsuleRAF); timerCapsuleRAF = null; }
+    const slot = document.getElementById('timerCardIconSlot');
+    if (!slot) return;
+    slot.classList.remove('capsule-active');
+    slot.innerHTML = '<i class="fa-solid fa-hourglass-half"></i>';
+  }
+
+  function tickTimerCapsule() {
+    if (timerCapsuleRAF) cancelAnimationFrame(timerCapsuleRAF);
+    (function tick() {
+      if (!timerEndTime) return;
+      const rem = Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+      const timeEl = document.getElementById('timerCapsuleTime');
+      const barEl  = document.getElementById('timerCapsuleBar');
+      if (timeEl) timeEl.textContent = formatCountdown(rem);
+      if (barEl && timerDurationSec > 0) barEl.style.width = (rem / timerDurationSec * 100).toFixed(2) + '%';
+      if (rem <= 0) return;
+      timerCapsuleRAF = requestAnimationFrame(tick);
+    })();
+  }
+
+  window.onbeforeunload = function() {
+    if (mqttClient && mqttClient.connected) mqttClient.end();
+    if (deviceTimeout) clearTimeout(deviceTimeout);
+    if (onlineCheckTimeout) clearTimeout(onlineCheckTimeout);
+    if (statusTimeout) clearTimeout(statusTimeout);
+    stopPingPolling();
+  };
+
+  // ── Hero Image Download Protection ──
+  (function() {
+    function blockEvent(e) { e.preventDefault(); return false; }
+    document.addEventListener('DOMContentLoaded', function() {
+      const img = document.getElementById('heroImage');
+      if (img) {
+        img.addEventListener('contextmenu', blockEvent);
+        img.addEventListener('dragstart', blockEvent);
+        img.addEventListener('mousedown', blockEvent);
+      }
+      const shield = img && img.nextElementSibling;
+      if (shield && shield.classList.contains('hero-image-shield')) {
+        shield.addEventListener('contextmenu', blockEvent);
+        shield.addEventListener('dragstart', blockEvent);
+        shield.addEventListener('mousedown', blockEvent);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
