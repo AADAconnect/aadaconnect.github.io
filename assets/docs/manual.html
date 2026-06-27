@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AADAconnect | User Manual</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --radius-xl: 32px;
+      --radius-lg: 28px;
+      --radius-md: 20px;
+      --radius-sm: 12px;
+      --transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    /* ── Light Theme ── */
+    [data-theme="light"] {
+      --bg: #F2F2F7;
+      --surface: #FFFFFF;
+      --surface-secondary: #F0F0F5;
+      --text-primary: #000000;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #C7C7CC;
+      --border: rgba(0,0,0,0.06);
+      --border-strong: rgba(0,0,0,0.1);
+      --active-blue: #0A84FF;
+      --active-light: #FF9500;
+      --online: #34C759;
+      --online-dim: rgba(52,199,89,0.12);
+      --danger: #FF3B30;
+      --danger-dim: rgba(255,59,48,0.1);
+      --shadow-sm: 0 4px 12px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    /* ── Dark Theme ── */
+    [data-theme="dark"] {
+      --bg: #000000;
+      --surface: #1C1C1E;
+      --surface-secondary: #2C2C2E;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #636366;
+      --border: rgba(255,255,255,0.08);
+      --border-strong: rgba(255,255,255,0.14);
+      --active-blue: #0A84FF;
+      --active-light: #FF9F0A;
+      --online: #30D158;
+      --online-dim: rgba(48,209,88,0.12);
+      --danger: #FF453A;
+      --danger-dim: rgba(255,69,58,0.12);
+      --shadow-sm: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    html, body { 
+      font-family: 'Inter', sans-serif; 
+      color: var(--text-primary); 
+      background: var(--bg);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── App Shell ── */
+    .app-container {
+      width: 100%; 
+      max-width: 600px;
+      margin: 0 auto;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    .header {
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      padding: 32px 24px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(var(--bg), 0.85);
+    }
+
+    .back-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--surface); border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; box-shadow: var(--shadow-sm);
+      transition: var(--transition); color: var(--text-primary);
+      font-size: 18px; flex-shrink: 0;
+    }
+    .back-btn:active { transform: scale(0.92); }
+
+    .header-titles {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sub-greeting {
+      font-size: 12px; color: var(--text-secondary);
+      font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+    }
+
+    .page-title {
+      font-size: 22px; font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text-primary);
+    }
+
+    /* ── Content Area ── */
+    .content {
+      padding: 24px;
+      padding-bottom: 80px;
+    }
+
+    .intro-card {
+      background: var(--active-blue);
+      color: #FFFFFF;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 32px rgba(10, 132, 255, 0.25);
+    }
+    .intro-card h2 { font-size: 20px; margin-bottom: 8px; font-weight: 700; }
+    .intro-card p { font-size: 14px; opacity: 0.9; line-height: 1.5; }
+
+    /* ── Sections ── */
+    .section-title {
+      font-size: 18px; font-weight: 700; 
+      color: var(--text-primary);
+      margin: 32px 0 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title i { color: var(--active-blue); font-size: 18px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card h3 {
+      font-size: 15px; font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+
+    .card p {
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 12px;
+    }
+    .card p:last-child { margin-bottom: 0; }
+    .card strong { color: var(--text-primary); font-weight: 600; }
+
+    /* ── Lists & Steps ── */
+    .steps-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(10,132,255,0.12); border: 1px solid rgba(10,132,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; color: var(--active-blue);
+      flex-shrink: 0; margin-top: 2px;
+    }
+
+    .step-text {
+      font-size: 14px; color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ── Badges & Callouts ── */
+    .coming-soon-badge {
+      background-color: rgba(10, 132, 255, 0.12);
+      color: var(--active-blue);
+      border: 1px solid rgba(10, 132, 255, 0.3);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .warning-box {
+      background: var(--danger-dim);
+      border: 1px solid rgba(255,69,58,0.25);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .warning-box i { color: var(--danger); font-size: 18px; margin-top: 2px; }
+    .warning-box p { color: var(--text-primary); font-size: 13px; margin: 0; }
+
+    .pro-tip {
+      background: var(--online-dim);
+      border: 1px solid rgba(48,209,88,0.3);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .pro-tip i { color: var(--online); font-size: 18px; margin-top: 2px; }
+    .pro-tip p { color: var(--text-primary); font-size: 13px; margin: 0; }
+
+    .color-orange { color: var(--active-light); font-weight: 600; }
+    .color-green { color: var(--online); font-weight: 600; }
+
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="back-btn" onclick="window.history.back();">
+      <i class="fa-solid fa-chevron-left"></i>
+    </div>
+    <div class="header-titles">
+      <div class="sub-greeting">AADAconnect</div>
+      <div class="page-title">User Manual</div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="content">
+
+    <div class="intro-card">
+      <h2>Welcome to AADAconnect</h2>
+      <p>Your comprehensive guide to setting up, controlling, and navigating your smart home ecosystem. Get the most out of your connected devices with ease.</p>
+    </div>
+
+    <!-- Section 1 -->
+    <div class="section-title"><i class="fa-solid fa-compass"></i> 1. Navigation</div>
+    <div class="card">
+      <p>Navigating the app is straightforward using the persistent dock at the bottom of your screen:</p>
+      <ul class="steps-list" style="margin-top: 16px;">
+        <li class="step-item">
+          <div class="step-num"><i class="fa-solid fa-house" style="font-size: 10px;"></i></div>
+          <div class="step-text"><strong>Home:</strong> Your main dashboard containing all devices, quick controls, and status indicators.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num"><i class="fa-solid fa-magnifying-glass" style="font-size: 10px;"></i></div>
+          <div class="step-text"><strong>Search:</strong> Quickly locate specific devices by name or ID.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num"><i class="fa-solid fa-plus" style="font-size: 10px;"></i></div>
+          <div class="step-text"><strong>Add:</strong> Provision and configure new smart devices to your network.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num"><i class="fa-solid fa-door-open" style="font-size: 10px;"></i></div>
+          <div class="step-text"><strong>Rooms:</strong> Organize your devices into distinct physical spaces.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num"><i class="fa-solid fa-ellipsis" style="font-size: 10px;"></i></div>
+          <div class="step-text"><strong>More:</strong> Access settings, layouts, haptics, and your account.</div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Section 2 -->
+    <div class="section-title"><i class="fa-solid fa-plug-circle-plus"></i> 2. Adding a New Device</div>
+    <div class="card">
+      <p>Adding a new smart plug to your AADAconnect ecosystem takes only a few moments. Follow these detailed steps to ensure a smooth setup:</p>
+      <ul class="steps-list" style="margin-top: 16px;">
+        <li class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-text"><strong>Start the Setup:</strong> Tap the prominent <span class="color-orange">Add (+)</span> icon in the bottom navigation bar of the dashboard.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-text"><strong>Note Your Device ID:</strong> The app will generate a unique Device ID (e.g., AADA-1A2B3C). Take a quick note of this ID, as it identifies your specific plug.</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Connect to the Plug:</strong> Leave the AADAconnect app momentarily and open your phone's Wi-Fi settings. Look for a temporary network named <strong>AADA-Plug</strong> and connect to it. 
+            <br><br><em style="font-size: 13px; color: var(--text-tertiary);">Note: Your phone might warn you that this network has "No Internet Connection." This is completely normal since you are connecting directly to the plug, not a router. Choose to stay connected.</em>
+          </div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-text"><strong>Enter Home Wi-Fi:</strong> Return to the AADAconnect app. You will see a configuration form. Enter your home's exact <strong>Network Name (SSID)</strong> and your <strong>Wi-Fi Password</strong>. Double-check for typos!</div>
+        </li>
+        <li class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-text"><strong>Send Configuration:</strong> Tap <strong>Configure Device</strong>. The app will securely send the credentials to the plug. Wait for the success message before navigating away. Once connected, your new device will automatically appear on your Dashboard!</div>
+        </li>
+      </ul>
+
+      <div class="warning-box">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p><strong>Troubleshooting:</strong> If the app says it cannot reach the device in Step 5, ensure your phone hasn't automatically disconnected from the <em>AADA-Plug</em> Wi-Fi network to switch back to mobile data. Temporarily disabling your cellular data during setup can help prevent this.</p>
+      </div>
+    </div>
+
+    <!-- Section 3 -->
+    <div class="section-title"><i class="fa-solid fa-table-cells-large"></i> 3. The Dashboard</div>
+    <div class="card">
+      <h3>Device Cards & Quick Control</h3>
+      <p>Each device is represented by a highly interactive card. A colored dot indicates whether the device is <span class="color-green">Online</span>, Offline, or Checking.</p>
+      <p>If <strong>Quick Control</strong> is enabled in settings, you can tap the circular power icon on the card to instantly turn a device ON or OFF. A pulsing orange glow means the command is pending.</p>
+      <p><em>Note: You can long-press a card or tap the three-dot icon to quickly Rename or Remove the device.</em></p>
+    </div>
+    <div class="card">
+      <h3>Sorting & Layouts</h3>
+      <p>Use the chips at the top of the dashboard to filter devices by Online/Offline. Tap the Sort pill to reorder alphabetically, by status, or by rank.</p>
+      <p>Go to <strong>More > Device Layout</strong> to change the grid style between Grid, List, Bento, or Compact to fit your preference.</p>
+    </div>
+
+    <!-- Section 4 -->
+    <div class="section-title"><i class="fa-solid fa-door-open"></i> 4. Rooms Management</div>
+    <div class="card">
+      <p>Grouping devices by Room makes managing large homes incredibly simple. Navigate to the <strong>Rooms</strong> tab and tap <strong>Add Room</strong>.</p>
+      <p>Once inside a room, tap <strong>Add Device</strong> at the top right to assign existing plugs to this space.</p>
+      
+      <div class="pro-tip">
+        <i class="fa-solid fa-lightbulb"></i>
+        <p><strong>Pro Tip:</strong> When viewing a room built from a preset (like Kitchen or Bedroom), AADAconnect automatically applies a beautiful, themed background image to the top of your screen!</p>
+      </div>
+    </div>
+
+    <!-- Section 5 -->
+    <div class="section-title"><i class="fa-solid fa-bolt"></i> 5. Control & Features</div>
+    <div class="card">
+      <h3>Manual Power</h3>
+      <p>Tapping anywhere on a Device Card opens the Detailed Control Screen. Tap the large, central power button to toggle the device. It will glow <span class="color-green">Green</span> when active.</p>
+    </div>
+    
+    <div class="card">
+      <h3 style="display: flex; align-items: center; gap: 8px;">Timers & Schedules <span class="coming-soon-badge">Coming Soon</span></h3>
+      <p><em>We are working hard to bring advanced timing features in an upcoming update!</em></p>
+      <p><strong>Timers:</strong> You will be able to set a countdown using an interactive drum picker to automatically turn your device ON, OFF, or Toggle when the timer ends.</p>
+      <p><strong>Schedules:</strong> Automate your daily routines by setting exact times of day and repeating days (e.g., M, T, W) for your devices to trigger automatically.</p>
+    </div>
+
+    <div class="card">
+      <h3 style="display: flex; align-items: center; gap: 8px;">Smart Automations <span class="coming-soon-badge">Coming Soon</span></h3>
+      <p><em>Prepare for a truly smart home with upcoming conditional triggers:</em></p>
+      <ul style="list-style-position: inside; color: var(--text-secondary); font-size: 14px; margin-top: 8px;">
+        <li><strong>Sunrise/Sunset:</strong> Triggers based on local solar times.</li>
+        <li><strong>Away/Arrive:</strong> Uses location tracking to trigger devices when you leave or return home.</li>
+        <li><strong>Power Threshold:</strong> Triggers actions if wattage limits are exceeded.</li>
+      </ul>
+    </div>
+
+    <!-- Section 6 -->
+    <div class="section-title"><i class="fa-solid fa-sliders"></i> 6. Settings & Preferences</div>
+    <div class="card">
+      <p>AADAconnect allows you to customize how the app feels. Access these options via the <strong>More</strong> tab in the bottom navigation.</p>
+      <p><strong>Haptic Feedback:</strong> To make digital controls feel physical, AADAconnect uses tactile vibrations. You can adjust the vibration intensity slider in <strong>Settings > Haptic Feedback</strong>, and choose whether to apply it only to the main power controller or to all buttons across the app.</p>
+      <p><strong>Account Settings:</strong> Tap your Profile Icon on the dashboard to view your server connection status and network latency. From the Settings sheet, you can also securely log out of your account.</p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Automatically apply the user's saved theme from localStorage
+  function initManualTheme() {
+    // Check 'appTheme' which is what dashboard.html uses
+    const savedTheme = localStorage.getItem('appTheme') || localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  }
+  
+  // Listen for cross-tab theme changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'theme' || e.key === 'appTheme') {
+      const newTheme = e.newValue || 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+    }
+  });
+
+  initManualTheme();
+</script>
+
+</body>
+</html>
